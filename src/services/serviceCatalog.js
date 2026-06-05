@@ -1,0 +1,88 @@
+export const serviceCatalog = [
+  {
+    id: 'general-consultation',
+    name: 'General Consultation',
+    category: 'Primary Care',
+    description: 'Symptoms, medication advice, referrals, and follow-up care.',
+    overview:
+      'General consultation covers common symptoms, treatment planning, medication review, and referrals when further care is required.',
+    doctor: 'Dr. Sarah Lee',
+    duration: '30 min',
+    slot: 'Today',
+    price: 'RM45',
+    rating: 4.8,
+    reviews: 156,
+    available: true,
+    location: 'MyCure Central, Room 203',
+    preparation: 'Bring current medication details and recent medical notes if available.',
+    includes: ['Symptom review', 'Medication guidance', 'Referral advice', 'Follow-up planning'],
+  },
+  {
+    id: 'health-screening',
+    name: 'Health Screening',
+    category: 'Wellness',
+    description: 'Preventive checks for blood pressure, glucose, cholesterol, and wellness.',
+    overview:
+      'Health screening focuses on preventive monitoring to identify risks early and maintain long-term wellness.',
+    doctor: 'Nurse Care Team',
+    duration: '45 min',
+    slot: 'This week',
+    price: 'RM90',
+    rating: 4.9,
+    reviews: 203,
+    available: true,
+    location: 'MyCure Central, Screening Unit',
+    preparation: 'Fast for 8 hours if your screening includes blood glucose or cholesterol tests.',
+    includes: [
+      'Blood pressure check',
+      'Glucose review',
+      'Cholesterol screening',
+      'Wellness summary',
+    ],
+  },
+  {
+    id: 'dental-care',
+    name: 'Dental Care',
+    category: 'Dental',
+    description: 'Routine dental review, cleaning, and oral health consultation.',
+    overview:
+      'Dental care appointments include oral assessment, professional cleaning, and practical guidance for daily care.',
+    doctor: 'Dr. Ryan Koh',
+    duration: '40 min',
+    slot: 'Tomorrow',
+    price: 'RM75',
+    rating: 4.7,
+    reviews: 98,
+    available: true,
+    location: 'MyCure Dental Suite',
+    preparation:
+      'Share any sensitivity, gum discomfort, or recent dental treatment before the visit.',
+    includes: [
+      'Dental review',
+      'Cleaning session',
+      'Oral health guidance',
+      'Follow-up recommendation',
+    ],
+  },
+  {
+    id: 'physiotherapy',
+    name: 'Physiotherapy',
+    category: 'Recovery',
+    description: 'Mobility assessment and guided recovery support.',
+    overview:
+      'Physiotherapy appointments assess mobility, discomfort, and recovery goals with guided treatment planning.',
+    doctor: 'Rehab Team',
+    duration: '60 min',
+    slot: 'Next week',
+    price: 'RM120',
+    rating: 4.6,
+    reviews: 87,
+    available: false,
+    location: 'MyCure Rehab Centre',
+    preparation:
+      'Wear comfortable clothing and bring any imaging or referral letters related to the condition.',
+    includes: ['Mobility assessment', 'Recovery planning', 'Exercise guidance', 'Progress review'],
+  },
+]
+
+export const getServiceById = (id) => serviceCatalog.find((service) => service.id === id)

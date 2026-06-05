@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-labelledby="title">
+  <title id="title">MyCure logo</title>
+  <defs>
+    <linearGradient id="bg" x1="16" x2="80" y1="14" y2="84" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1d63d8" />
+      <stop offset="1" stop-color="#123b7a" />
+    </linearGradient>
+  </defs>
+  <rect width="96" height="96" rx="24" fill="url(#bg)" />
+  <path
+    fill="#fff"
+    d="M42 22h12c2.2 0 4 1.8 4 4v14h14c2.2 0 4 1.8 4 4v10c0 2.2-1.8 4-4 4H58v14c0 2.2-1.8 4-4 4H42c-2.2 0-4-1.8-4-4V58H24c-2.2 0-4-1.8-4-4V44c0-2.2 1.8-4 4-4h14V26c0-2.2 1.8-4 4-4Z"
+    opacity=".96"
+  />
+  <path
+    fill="none"
+    stroke="#123b7a"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="5"
+    d="M30 50h10l5-10 8 20 5-10h8"
+  />
+</svg>

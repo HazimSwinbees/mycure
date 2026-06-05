@@ -1,0 +1,254 @@
+@import './base.css';
+
+:root {
+  --cure-bg: #f2f7ff;
+  --cure-bg-strong: #dcecff;
+  --cure-surface: #ffffff;
+  --cure-surface-alt: #f8fbff;
+  --cure-text: #132033;
+  --cure-muted: #5f6f86;
+  --cure-line: #d7e3f5;
+  --cure-primary: #1d63d8;
+  --cure-primary-dark: #123b7a;
+  --cure-primary-soft: #dcecff;
+  --cure-accent: #2a7bf0;
+  --cure-accent-soft: #e9f3ff;
+  --cure-warning: #a46a0a;
+  --cure-danger: #b63f4a;
+  --shadow-sm: 0 14px 40px rgba(16, 42, 86, 0.08);
+  --shadow-md: 0 24px 70px rgba(16, 42, 86, 0.12);
+}
+
+* {
+  font-weight: inherit;
+}
+
+body {
+  background:
+    radial-gradient(circle at top left, rgba(42, 123, 240, 0.14), transparent 34rem),
+    linear-gradient(180deg, var(--cure-bg-strong), var(--cure-bg) 34rem);
+  color: var(--cure-text);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+#app {
+  min-height: 100vh;
+}
+
+.page-enter-active,
+.page-leave-active {
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+.page-enter-from,
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+.brand-mark {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  border-radius: 8px;
+  color: #ffffff;
+  font-weight: 900;
+  letter-spacing: 0;
+  box-shadow: 0 12px 24px rgba(29, 99, 216, 0.24);
+}
+
+.brand-copy {
+  display: grid;
+  gap: 1px;
+}
+
+.brand-copy strong {
+  color: var(--cure-text);
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.brand-copy span {
+  color: var(--cure-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  gap: 0.5rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 0.72rem 1rem;
+  font-weight: 800;
+  line-height: 1;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--cure-primary), var(--cure-primary-dark));
+  color: #ffffff;
+  box-shadow: 0 12px 24px rgba(29, 99, 216, 0.18);
+}
+
+.btn-primary:hover {
+  background: var(--cure-primary-dark);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.86);
+  border-color: var(--cure-line);
+  color: var(--cure-text);
+}
+
+.btn-secondary:hover {
+  border-color: var(--cure-primary);
+  color: var(--cure-primary);
+}
+
+.page-shell {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.eyebrow {
+  color: var(--cure-accent);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.page-header {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.page-header h1 {
+  color: var(--cure-text);
+  font-size: clamp(1.65rem, 4vw, 2.25rem);
+  font-weight: 850;
+  letter-spacing: 0;
+  line-height: 1.08;
+}
+
+.page-header p {
+  max-width: 64ch;
+  color: var(--cure-muted);
+}
+
+.panel {
+  border: 1px solid var(--cure-line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(14px);
+}
+
+.panel-body {
+  padding: clamp(1rem, 3vw, 1.35rem);
+}
+
+.metric-grid,
+.content-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.metric-card {
+  display: grid;
+  min-height: 120px;
+  align-content: space-between;
+  gap: 1rem;
+  border: 1px solid var(--cure-line);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(248, 251, 255, 0.94)), #ffffff;
+  padding: 1rem;
+}
+
+.metric-card span {
+  color: var(--cure-muted);
+  font-weight: 700;
+}
+
+.metric-card strong {
+  color: var(--cure-text);
+  font-size: 2rem;
+  font-weight: 850;
+  line-height: 1;
+}
+
+.form-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.field label {
+  color: var(--cure-text);
+  font-weight: 800;
+}
+
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  border: 1px solid var(--cure-line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--cure-text);
+  padding: 0.78rem 0.9rem;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: var(--cure-primary);
+  outline: 3px solid rgba(29, 99, 216, 0.14);
+}
+
+@media (min-width: 720px) {
+  .metric-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .content-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
