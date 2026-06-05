@@ -24,6 +24,10 @@ const router = createRouter({
       children: [
         {
           path: '',
+          redirect: { name: 'login' },
+        },
+        {
+          path: 'home',
           name: 'landing',
           component: () => import('../views/LandingView.vue'),
           meta: { title: 'MyCure Web' },
