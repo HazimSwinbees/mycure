@@ -19,6 +19,8 @@ const patient = ref(null)
 const navigationItems = [
   { label: 'Dashboard', to: { name: 'dashboard' }, icon: 'dashboard' },
   { label: 'Services', to: { name: 'services' }, icon: 'services' },
+  { label: 'Clinic & Doctor Info', to: { name: 'clinic-and-doctor-info' }, icon: 'clinic' },
+  { label: 'Gemini Chat', to: { name: 'gemini-chat' }, icon: 'chat' },
   { label: 'Symptom Checker', to: { name: 'symptom-checker' }, icon: 'symptoms' },
   { label: 'Medical Visits', to: { name: 'prescriptions' }, icon: 'prescriptions' },
   { label: 'Appointments', to: { name: 'appointments' }, icon: 'appointments' },
@@ -46,6 +48,10 @@ const iconPaths = {
   dashboard: 'M3.5 4.5h7v7h-7zm10 0h7v4h-7zm0 7h7v7h-7zm-10 3h7v4h-7z',
   services:
     'M5 11.5c0-3 2.5-5.5 5.5-5.5S16 8.5 16 11.5 13.5 17 10.5 17 5 14.5 5 11.5Zm10.5 0H20m-19 0h4.5',
+  clinic:
+    'M3.5 16V8.8c0-.5.2-.9.6-1.2l5-3.8c.5-.4 1.2-.4 1.8 0l5 3.8c.4.3.6.7.6 1.2V16M7.5 16v-4.5h5V16',
+  chat:
+    'M4 5.5h12a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H9l-3.5 2.8c-.6.4-1.5 0-1.5-.8V15.5H4a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2Z',
   symptoms:
     'M3 10h2.4l1.4-3.2 2.7 7 2.2-5.1 1.3 1.9H17',
   prescriptions:

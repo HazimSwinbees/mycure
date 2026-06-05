@@ -89,6 +89,23 @@ export const getCurrentDoctorProfile = async () => {
   return mapDoctorProfile(data)
 }
 
+export const getDoctorProfiles = async () => {
+  const { data, error } = await supabase
+    .from(doctorProfilesTable)
+    .select('*')
+    .order('full_name', { ascending: true })
+
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  if (!data?.length) {
+    return [defaultDoctorProfile]
+  }
+
+  return data.map(mapDoctorProfile)
+}
+
 export const updateCurrentDoctorProfile = async ({
   fullName,
   roleTitle,

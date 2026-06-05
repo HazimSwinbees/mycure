@@ -1,123 +1,203 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import {
-  doctorAppointments,
-  doctorDashboardNotes,
-  doctorNotifications,
-  doctorPatients,
-  doctorPrescriptions,
-} from '../../services/doctorPortalMock'
+import { getDoctorAppointments } from '../../services/appointmentApi'
+import { getCurrentDoctorProfile } from '../../services/doctorProfileApi'
+import { getDoctorMedicalRecords } from '../../services/medicalRecordApi'
+import { getDoctorNotifications } from '../../services/notificationApi'
+import { getDoctorPatients } from '../../services/patientApi'
+
+const doctorProfile = ref(null)
+const appointments = ref([])
+const patients = ref([])
+const notifications = ref([])
+const medicalRecords = ref([])
+const isLoading = ref(true)
+const loadError = ref('')
+
+const todayKey = new Date().toISOString().slice(0, 10)
+
+const todayAppointments = computed(() =>
+  appointments.value.filter((item) => item.rawDate === todayKey),
+)
 
 const metrics = computed(() => [
-  { label: 'Today appointments', value: doctorAppointments.length, note: 'Clinic schedule' },
+  { label: 'Today appointments', value: todayAppointments.value.length, note: 'Clinic schedule' },
   {
     label: 'Pending requests',
-    value: doctorAppointments.filter((item) => item.status === 'Pending').length,
+    value: appointments.value.filter((item) => item.status === 'Pending').length,
     note: 'Need confirmation',
   },
   {
-    label: 'Active prescriptions',
-    value: doctorPrescriptions.filter((item) => item.status === 'Active').length,
-    note: 'Current medication plans',
+    label: 'Patient records',
+    value: patients.value.length,
+    note: 'Available in directory',
   },
   {
     label: 'Unread notices',
-    value: doctorNotifications.filter((item) => item.status === 'Unread').length,
+    value: notifications.value.filter((item) => !item.read).length,
     note: 'Doctor portal updates',
   },
 ])
 
-const currentQueue = computed(() => doctorAppointments.slice(0, 3))
-const recentPatients = computed(() => doctorPatients.slice(0, 3))
+const currentQueue = computed(() => todayAppointments.value.slice(0, 3))
+
+const recentPatients = computed(() => {
+  const seen = new Set()
+  return appointments.value
+    .filter((item) => item.patientId && !seen.has(item.patientId) && seen.add(item.patientId))
+    .slice(0, 3)
+    .map((item) => ({
+      id: item.patientId,
+      name: item.patientName || 'Patient',
+      condition: item.notes || item.service || '-',
+      lastVisit: item.date || '-',
+    }))
+})
+
+const recentNotifications = computed(() => notifications.value.slice(0, 3))
+const recentMedicalRecords = computed(() => medicalRecords.value.slice(0, 3))
+
+onMounted(async () => {
+  isLoading.value = true
+  loadError.value = ''
+
+  try {
+    const [profileData, appointmentData, patientData, notificationData, medicalRecordData] =
+      await Promise.all([
+        getCurrentDoctorProfile(),
+        getDoctorAppointments(),
+        getDoctorPatients(),
+        getDoctorNotifications(),
+        getDoctorMedicalRecords(),
+      ])
+
+    doctorProfile.value = profileData
+    appointments.value = appointmentData
+    patients.value = patientData
+    notifications.value = notificationData
+    medicalRecords.value = medicalRecordData
+  } catch (error) {
+    loadError.value = error.message || 'Unable to load dashboard information.'
+  } finally {
+    isLoading.value = false
+  }
+})
 </script>
 
 <template>
   <section class="doctor-page">
-    <section class="hero-panel">
-      <div class="hero-copy">
-        <p class="section-label">Doctor portal</p>
-        <h1>Clinic overview</h1>
-        <p class="muted-copy">
-          Review today’s queue, patient activity, and clinic reminders from one place.
-        </p>
+    <section v-if="loadError" class="panel state-panel">
+      <p class="section-label">Doctor portal</p>
+      <h2>Unable to load dashboard</h2>
+      <p class="muted-copy">{{ loadError }}</p>
+    </section>
+
+    <section v-else-if="isLoading" class="panel state-panel">
+      <p class="section-label">Doctor portal</p>
+      <h2>Loading dashboard</h2>
+      <p class="muted-copy">Fetching appointments, patients, and clinic updates.</p>
+    </section>
+
+    <template v-else>
+      <section class="hero-panel">
+        <div class="hero-copy">
+          <p class="section-label">Doctor portal</p>
+          <h1>{{ doctorProfile?.fullName || 'Clinic overview' }}</h1>
+          <p class="muted-copy">
+            Review today's queue, patient activity, and clinic reminders from one place.
+          </p>
+        </div>
+        <RouterLink class="primary-link" :to="{ name: 'admin-appointments' }">
+          Open appointments
+        </RouterLink>
+      </section>
+
+      <section class="metric-grid">
+        <article v-for="metric in metrics" :key="metric.label" class="metric-card">
+          <span>{{ metric.label }}</span>
+          <strong>{{ metric.value }}</strong>
+          <small>{{ metric.note }}</small>
+        </article>
+      </section>
+
+      <div class="content-grid">
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="section-label">Queue</p>
+              <h2>Today's appointments</h2>
+            </div>
+            <RouterLink class="text-link" :to="{ name: 'admin-appointments' }">View all</RouterLink>
+          </div>
+
+          <div class="stack-list">
+            <article v-for="item in currentQueue" :key="item.id" class="list-card">
+              <div class="list-main">
+                <strong>{{ item.patientName }}</strong>
+                <span>{{ item.service }}</span>
+              </div>
+              <div class="list-meta">
+                <small>{{ item.time }}</small>
+                <span :class="['status-badge', item.status.toLowerCase().replaceAll(' ', '-')]">
+                  {{ item.status }}
+                </span>
+              </div>
+            </article>
+            <p v-if="!currentQueue.length" class="empty-copy">No appointments scheduled for today.</p>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="section-label">Patients</p>
+              <h2>Recent patient activity</h2>
+            </div>
+            <RouterLink class="text-link" :to="{ name: 'admin-patients' }">View all</RouterLink>
+          </div>
+
+          <div class="stack-list">
+            <article v-for="patient in recentPatients" :key="patient.id" class="list-card">
+              <div class="list-main">
+                <strong>{{ patient.name }}</strong>
+                <span>{{ patient.condition }}</span>
+              </div>
+              <div class="list-meta">
+                <small>{{ patient.lastVisit }}</small>
+              </div>
+            </article>
+            <p v-if="!recentPatients.length" class="empty-copy">No recent patient activity yet.</p>
+          </div>
+        </section>
+
+        <section class="panel panel-wide">
+          <div class="panel-head">
+            <div>
+              <p class="section-label">Clinic updates</p>
+              <h2>Medical records and notices</h2>
+            </div>
+          </div>
+
+          <div class="note-list">
+            <article v-for="record in recentMedicalRecords" :key="record.id" class="note-card">
+              <p>
+                <strong>{{ record.patientName }}</strong> · {{ record.serviceName }} ·
+                {{ record.visitDate }}
+              </p>
+              <p>{{ record.diagnosis }}</p>
+            </article>
+            <article v-for="notice in recentNotifications" :key="`notice-${notice.id}`" class="note-card">
+              <p><strong>{{ notice.title }}</strong></p>
+              <p>{{ notice.body }}</p>
+            </article>
+            <p v-if="!recentMedicalRecords.length && !recentNotifications.length" class="empty-copy">
+              No dashboard updates available yet.
+            </p>
+          </div>
+        </section>
       </div>
-      <RouterLink class="primary-link" :to="{ name: 'admin-appointments' }">
-        Open appointments
-      </RouterLink>
-    </section>
-
-    <section class="metric-grid">
-      <article v-for="metric in metrics" :key="metric.label" class="metric-card">
-        <span>{{ metric.label }}</span>
-        <strong>{{ metric.value }}</strong>
-        <small>{{ metric.note }}</small>
-      </article>
-    </section>
-
-    <div class="content-grid">
-      <section class="panel">
-        <div class="panel-head">
-          <div>
-            <p class="section-label">Queue</p>
-            <h2>Today’s appointments</h2>
-          </div>
-          <RouterLink class="text-link" :to="{ name: 'admin-appointments' }">View all</RouterLink>
-        </div>
-
-        <div class="stack-list">
-          <article v-for="item in currentQueue" :key="item.id" class="list-card">
-            <div class="list-main">
-              <strong>{{ item.patientName }}</strong>
-              <span>{{ item.service }}</span>
-            </div>
-            <div class="list-meta">
-              <small>{{ item.time }}</small>
-              <span :class="['status-badge', item.status.toLowerCase().replaceAll(' ', '-')]">
-                {{ item.status }}
-              </span>
-            </div>
-          </article>
-        </div>
-      </section>
-
-      <section class="panel">
-        <div class="panel-head">
-          <div>
-            <p class="section-label">Patients</p>
-            <h2>Recent patient records</h2>
-          </div>
-          <RouterLink class="text-link" :to="{ name: 'admin-patients' }">View all</RouterLink>
-        </div>
-
-        <div class="stack-list">
-          <article v-for="patient in recentPatients" :key="patient.id" class="list-card">
-            <div class="list-main">
-              <strong>{{ patient.name }}</strong>
-              <span>{{ patient.condition }}</span>
-            </div>
-            <div class="list-meta">
-              <small>{{ patient.lastVisit }}</small>
-            </div>
-          </article>
-        </div>
-      </section>
-
-      <section class="panel panel-wide">
-        <div class="panel-head">
-          <div>
-            <p class="section-label">Clinic notes</p>
-            <h2>Today’s reminders</h2>
-          </div>
-        </div>
-
-        <div class="note-list">
-          <article v-for="note in doctorDashboardNotes" :key="note" class="note-card">
-            <p>{{ note }}</p>
-          </article>
-        </div>
-      </section>
-    </div>
+    </template>
   </section>
 </template>
 
@@ -183,7 +263,8 @@ const recentPatients = computed(() => doctorPatients.slice(0, 3))
 .metric-card small,
 .list-main span,
 .list-meta small,
-.note-card p {
+.note-card p,
+.empty-copy {
   color: #6b7280;
 }
 
@@ -218,6 +299,10 @@ const recentPatients = computed(() => doctorPatients.slice(0, 3))
   display: grid;
   gap: 1rem;
   align-content: start;
+}
+
+.state-panel {
+  padding: 1.25rem;
 }
 
 .text-link {
@@ -284,6 +369,15 @@ const recentPatients = computed(() => doctorPatients.slice(0, 3))
 
   .panel-wide {
     grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 720px) {
+  .hero-panel,
+  .panel-head,
+  .list-card {
+    align-items: start;
+    flex-direction: column;
   }
 }
 </style>

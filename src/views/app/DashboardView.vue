@@ -1,26 +1,16 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
+import { getCurrentPatientAppointments } from '../../services/appointmentApi'
+import { getCurrentPatientMedicalRecords } from '../../services/medicalRecordApi'
+import { getCurrentPatientNotifications } from '../../services/notificationApi'
 import { getCurrentPatientProfile } from '../../services/patientApi'
 
 const patient = ref(null)
+const appointments = ref([])
+const notifications = ref([])
+const medicalRecords = ref([])
 const isLoading = ref(true)
 const loadError = ref('')
-
-const upcomingAppointment = {
-  doctor: 'Dr. Sarah Lee',
-  specialty: 'General Physician',
-  date: '24 May 2026',
-  time: '10:30 AM',
-  room: 'Room 203',
-  status: 'Confirmed',
-}
-
-const overviewMetrics = [
-  { label: 'Next visit', value: 'Today', detail: '10:30 AM' },
-  { label: 'Notifications', value: '03', detail: '1 needs attention' },
-  { label: 'Medication', value: '02', detail: 'Scheduled today' },
-  { label: 'Profile', value: 'Complete', detail: 'Records updated' },
-]
 
 const quickActions = [
   { title: 'Book appointment', detail: 'Schedule a new visit', to: { name: 'booking' } },
@@ -33,34 +23,71 @@ const quickActions = [
   { title: 'Manage profile', detail: 'Update personal details', to: { name: 'profile' } },
 ]
 
-const updates = [
-  { title: 'Appointment reminder', text: 'Consultation starts at 10:30 AM today.' },
-  { title: 'Lab result ready', text: 'Your latest blood test report is available.' },
-  { title: 'Payment pending', text: 'One consultation fee is awaiting payment.' },
-]
+const toAppointmentTimestamp = (appointment) => {
+  if (!appointment?.rawDate) {
+    return Number.POSITIVE_INFINITY
+  }
 
-const medicineSchedule = [
-  { name: 'Amoxicillin', note: 'After breakfast', time: '8:00 AM' },
-  { name: 'Vitamin C', note: 'After lunch', time: '1:00 PM' },
-]
+  const dateValue = new Date(`${appointment.rawDate}T${appointment.time || '00:00'}`)
+  return Number.isNaN(dateValue.getTime()) ? Number.POSITIVE_INFINITY : dateValue.getTime()
+}
 
-const careTimeline = [
-  { label: 'Check in', value: '10:00 AM', helper: 'Arrive 30 minutes before your visit.' },
-  { label: 'Consultation', value: '10:30 AM', helper: 'Dr. Sarah Lee, General Physician.' },
-  { label: 'Follow-up', value: '11:15 AM', helper: 'Collect your next-step advice.' },
-]
+const activeAppointments = computed(() =>
+  [...appointments.value]
+    .filter((item) => !['Cancelled', 'Rejected', 'Completed'].includes(item.status))
+    .sort((a, b) => toAppointmentTimestamp(a) - toAppointmentTimestamp(b)),
+)
 
-const healthOverview = [
-  { label: 'Blood pressure', value: '120/80', helper: 'Normal' },
-  { label: 'Heart rate', value: '72 bpm', helper: 'Resting' },
-  { label: 'BMI', value: '22.1', helper: 'Healthy' },
-]
+const upcomingAppointment = computed(() => activeAppointments.value[0] || null)
 
-const displayName = computed(() => patient.value?.first_name || patient.value?.full_name || 'Aiman')
+const recentAppointments = computed(() => [...appointments.value].slice(0, 3))
+const recentMedicalRecords = computed(() => [...medicalRecords.value].slice(0, 3))
+const recentNotifications = computed(() => [...notifications.value].slice(0, 3))
+const unreadNotifications = computed(() => notifications.value.filter((item) => !item.read).length)
+
+const overviewMetrics = computed(() => [
+  {
+    label: 'Next visit',
+    value: upcomingAppointment.value?.date || 'None',
+    detail: upcomingAppointment.value?.time || 'No upcoming appointment',
+  },
+  {
+    label: 'Notifications',
+    value: String(notifications.value.length).padStart(2, '0'),
+    detail: `${unreadNotifications.value} unread`,
+  },
+  {
+    label: 'Medical records',
+    value: String(medicalRecords.value.length).padStart(2, '0'),
+    detail: 'Visit history available',
+  },
+  {
+    label: 'Appointments',
+    value: String(appointments.value.length).padStart(2, '0'),
+    detail: `${activeAppointments.value.length} active`,
+  },
+])
+
+const displayName = computed(
+  () => patient.value?.first_name || patient.value?.full_name || patient.value?.email || 'Patient',
+)
 
 onMounted(async () => {
+  isLoading.value = true
+  loadError.value = ''
+
   try {
-    patient.value = await getCurrentPatientProfile()
+    const [profileData, appointmentData, notificationData, medicalRecordData] = await Promise.all([
+      getCurrentPatientProfile(),
+      getCurrentPatientAppointments(),
+      getCurrentPatientNotifications(),
+      getCurrentPatientMedicalRecords(),
+    ])
+
+    patient.value = profileData
+    appointments.value = appointmentData
+    notifications.value = notificationData
+    medicalRecords.value = medicalRecordData
   } catch (error) {
     loadError.value = error.message || 'Unable to load patient information.'
   } finally {
@@ -79,7 +106,7 @@ onMounted(async () => {
         <div class="hero-copy">
           <p class="section-label">Dashboard</p>
           <h1>Welcome back, {{ displayName }}</h1>
-          <p class="muted-copy">Appointments, care updates, and health details in one place.</p>
+          <p class="muted-copy">Appointments, visit updates, and reminders in one place.</p>
         </div>
 
         <div class="hero-actions">
@@ -104,24 +131,32 @@ onMounted(async () => {
             <div class="panel-head">
               <div>
                 <p class="section-label">Upcoming appointment</p>
-                <h2>{{ upcomingAppointment.doctor }}</h2>
-                <p class="muted-copy">{{ upcomingAppointment.specialty }}</p>
+                <h2>{{ upcomingAppointment?.service || 'No upcoming appointment' }}</h2>
+                <p class="muted-copy">
+                  {{
+                    upcomingAppointment
+                      ? `${upcomingAppointment.doctor} · ${upcomingAppointment.category}`
+                      : 'Book your next clinic visit when you are ready.'
+                  }}
+                </p>
               </div>
-              <span class="status-chip">{{ upcomingAppointment.status }}</span>
+              <span v-if="upcomingAppointment" class="status-chip">
+                {{ upcomingAppointment.status }}
+              </span>
             </div>
 
             <div class="appointment-meta">
               <article class="meta-item">
                 <span>Date</span>
-                <strong>{{ upcomingAppointment.date }}</strong>
+                <strong>{{ upcomingAppointment?.date || '-' }}</strong>
               </article>
               <article class="meta-item">
                 <span>Time</span>
-                <strong>{{ upcomingAppointment.time }}</strong>
+                <strong>{{ upcomingAppointment?.time || '-' }}</strong>
               </article>
               <article class="meta-item">
-                <span>Room</span>
-                <strong>{{ upcomingAppointment.room }}</strong>
+                <span>Location</span>
+                <strong>{{ upcomingAppointment?.location || '-' }}</strong>
               </article>
             </div>
 
@@ -139,38 +174,42 @@ onMounted(async () => {
             <section class="panel">
               <div class="panel-head">
                 <div>
-                  <p class="section-label">Schedule</p>
-                  <h2>Today</h2>
+                  <p class="section-label">Appointments</p>
+                  <h2>Recent bookings</h2>
                 </div>
               </div>
 
               <div class="stack-list">
-                <article v-for="item in careTimeline" :key="item.label" class="stack-row">
+                <article v-for="item in recentAppointments" :key="item.id" class="stack-row">
                   <div class="stack-main">
-                    <h3>{{ item.label }}</h3>
-                    <p>{{ item.helper }}</p>
+                    <h3>{{ item.service }}</h3>
+                    <p>{{ item.date }} · {{ item.doctor }}</p>
                   </div>
-                  <strong class="stack-value">{{ item.value }}</strong>
+                  <strong class="stack-value">{{ item.status }}</strong>
                 </article>
+                <p v-if="!recentAppointments.length" class="empty-copy">No appointments yet.</p>
               </div>
             </section>
 
             <section class="panel">
               <div class="panel-head">
                 <div>
-                  <p class="section-label">Health overview</p>
-                  <h2>Vitals</h2>
+                  <p class="section-label">Medical records</p>
+                  <h2>Recent visits</h2>
                 </div>
               </div>
 
               <div class="vitals-list">
-                <article v-for="item in healthOverview" :key="item.label" class="vital-row">
+                <article v-for="item in recentMedicalRecords" :key="item.id" class="vital-row">
                   <div>
-                    <span>{{ item.label }}</span>
-                    <small>{{ item.helper }}</small>
+                    <span>{{ item.serviceName }}</span>
+                    <small>{{ item.visitDate }}</small>
                   </div>
-                  <strong>{{ item.value }}</strong>
+                  <strong>{{ item.diagnosis }}</strong>
                 </article>
+                <p v-if="!recentMedicalRecords.length" class="empty-copy">
+                  No medical records available yet.
+                </p>
               </div>
             </section>
           </div>
@@ -208,30 +247,43 @@ onMounted(async () => {
             </div>
 
             <div class="stack-list">
-              <article v-for="item in updates" :key="item.title" class="stack-row">
+              <article v-for="item in recentNotifications" :key="item.id" class="stack-row">
                 <div class="stack-main">
                   <h3>{{ item.title }}</h3>
-                  <p>{{ item.text }}</p>
+                  <p>{{ item.body }}</p>
                 </div>
+                <strong class="stack-value">{{ item.time }}</strong>
               </article>
+              <p v-if="!recentNotifications.length" class="empty-copy">No notifications yet.</p>
             </div>
           </section>
 
           <section class="panel">
             <div class="panel-head">
               <div>
-                <p class="section-label">Medication</p>
-                <h2>Today</h2>
+                <p class="section-label">Profile</p>
+                <h2>Patient details</h2>
               </div>
             </div>
 
             <div class="stack-list">
-              <article v-for="item in medicineSchedule" :key="item.name" class="stack-row">
+              <article class="stack-row">
                 <div class="stack-main">
-                  <h3>{{ item.name }}</h3>
-                  <p>{{ item.note }}</p>
+                  <h3>Email</h3>
+                  <p>{{ patient?.email || '-' }}</p>
                 </div>
-                <strong class="stack-value">{{ item.time }}</strong>
+              </article>
+              <article class="stack-row">
+                <div class="stack-main">
+                  <h3>Phone</h3>
+                  <p>{{ patient?.phone || '-' }}</p>
+                </div>
+              </article>
+              <article class="stack-row">
+                <div class="stack-main">
+                  <h3>Address</h3>
+                  <p>{{ patient?.home_address || '-' }}</p>
+                </div>
               </article>
             </div>
           </section>
@@ -314,7 +366,8 @@ onMounted(async () => {
 .vital-row span,
 .vital-row small,
 .inline-link,
-.action-card p {
+.action-card p,
+.empty-copy {
   color: #6b7280;
 }
 

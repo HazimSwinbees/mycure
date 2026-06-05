@@ -1,41 +1,32 @@
 <script setup>
 import { reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
 import logoUrl from '../../assets/mycure-logo.png'
-import { loginUser } from '../../services/authApi'
-
-const router = useRouter()
-const errorMessage = ref('')
-const isSubmitting = ref(false)
-const showPassword = ref(false)
-const rememberMe = ref(false)
+import { requestPasswordReset } from '../../services/authApi'
 
 const form = reactive({
   email: '',
-  password: '',
 })
 
-const handleLogin = async () => {
-  errorMessage.value = ''
+const errorMessage = ref('')
+const successMessage = ref('')
+const isSubmitting = ref(false)
 
-  if (!form.email || !form.password) {
-    errorMessage.value = 'Please enter both email and password.'
+const handleSubmit = async () => {
+  errorMessage.value = ''
+  successMessage.value = ''
+
+  if (!form.email) {
+    errorMessage.value = 'Please enter your email address.'
     return
   }
 
   isSubmitting.value = true
 
   try {
-    const { session, user } = await loginUser(form)
-    const role = user?.user_metadata?.role || 'patient'
-
-    localStorage.setItem('mycure_token', session.access_token)
-    localStorage.setItem('mycure_refresh_token', session.refresh_token)
-    localStorage.setItem('mycure_role', role)
-    localStorage.setItem('mycure_user', JSON.stringify(user))
-    router.push(role === 'doctor' ? '/admin/dashboard' : '/app/dashboard')
+    await requestPasswordReset(form.email)
+    successMessage.value = 'Reset link sent. Check your email to continue.'
   } catch (error) {
-    errorMessage.value = error.message || 'Login failed. Please check your credentials and try again.'
+    errorMessage.value = error.message || 'Unable to send reset email right now.'
   } finally {
     isSubmitting.value = false
   }
@@ -50,17 +41,21 @@ const handleLogin = async () => {
       </div>
 
       <div class="panel-head">
-        <h1>Sign In</h1>
-        <p class="muted-copy">Enter your credentials to continue</p>
+        <h1>Forgot Password</h1>
+        <p class="muted-copy">Enter your email and we will send you a reset link</p>
       </div>
 
       <transition name="fade">
-        <div v-if="errorMessage" class="alert alert-error" role="alert">
-          {{ errorMessage }}
+        <div v-if="errorMessage" class="alert alert-error" role="alert">{{ errorMessage }}</div>
+      </transition>
+
+      <transition name="fade">
+        <div v-if="successMessage" class="alert alert-success" role="status">
+          {{ successMessage }}
         </div>
       </transition>
 
-      <form class="auth-form" @submit.prevent="handleLogin">
+      <form class="auth-form" @submit.prevent="handleSubmit">
         <label class="form-field">
           <span>Email</span>
           <input
@@ -72,43 +67,16 @@ const handleLogin = async () => {
           />
         </label>
 
-        <label class="form-field">
-          <span>Password</span>
-          <div class="password-shell">
-            <input
-              v-model="form.password"
-              :type="showPassword ? 'text' : 'password'"
-              placeholder="Password"
-              autocomplete="current-password"
-              required
-            />
-            <button type="button" class="password-toggle" @click="showPassword = !showPassword">
-              {{ showPassword ? 'Hide' : 'Show' }}
-            </button>
-          </div>
-        </label>
-
-        <div class="form-meta">
-          <label class="remember-me">
-            <input v-model="rememberMe" type="checkbox" />
-            <span>Remember me</span>
-          </label>
-          <RouterLink :to="{ name: 'forgot-password' }" class="text-link">
-            Forgot password?
-          </RouterLink>
-        </div>
-
         <button type="submit" class="primary-action" :disabled="isSubmitting">
-          {{ isSubmitting ? 'Signing in...' : 'Sign In' }}
+          {{ isSubmitting ? 'Sending...' : 'Send Reset Link' }}
         </button>
       </form>
 
       <div class="panel-footer">
         <p>
-          Don't have an account?
-          <RouterLink :to="{ name: 'register' }">Create one</RouterLink>
+          Remembered your password?
+          <RouterLink :to="{ name: 'login' }">Back to login</RouterLink>
         </p>
-        <RouterLink :to="{ name: 'landing' }" class="back-link">Back to home</RouterLink>
       </div>
     </section>
   </section>
@@ -183,6 +151,12 @@ const handleLogin = async () => {
   color: #be123c;
 }
 
+.alert-success {
+  border: 1px solid #bbf7d0;
+  background: #f0fdf4;
+  color: #15803d;
+}
+
 .auth-form {
   display: grid;
   gap: 0.9rem;
@@ -216,52 +190,6 @@ const handleLogin = async () => {
   box-shadow: 0 0 0 3px rgba(106, 138, 247, 0.12);
 }
 
-.password-shell {
-  position: relative;
-}
-
-.password-shell input {
-  padding-right: 4.75rem;
-}
-
-.password-toggle {
-  position: absolute;
-  top: 50%;
-  right: 0.7rem;
-  transform: translateY(-50%);
-  border: 0;
-  background: transparent;
-  color: #94a3b8;
-  font-size: 0.78rem;
-  font-weight: 700;
-}
-
-.form-meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  font-size: 0.78rem;
-}
-
-.remember-me {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  color: #94a3b8;
-}
-
-.remember-me input {
-  width: 0.85rem;
-  height: 0.85rem;
-  accent-color: #5b7cf2;
-}
-
-.text-link {
-  color: #5b7cf2;
-  font-weight: 700;
-}
-
 .primary-action {
   min-height: 2.75rem;
   border: 0;
@@ -277,8 +205,6 @@ const handleLogin = async () => {
 }
 
 .panel-footer {
-  display: grid;
-  gap: 0.65rem;
   text-align: center;
 }
 
@@ -292,10 +218,6 @@ const handleLogin = async () => {
   color: #5b7cf2;
   font-weight: 700;
   text-decoration: none;
-}
-
-.back-link {
-  font-size: 0.82rem;
 }
 
 .fade-enter-active,
@@ -319,11 +241,6 @@ const handleLogin = async () => {
 
   .form-field input {
     font-size: 16px;
-  }
-
-  .form-meta {
-    flex-direction: column;
-    align-items: flex-start;
   }
 }
 </style>

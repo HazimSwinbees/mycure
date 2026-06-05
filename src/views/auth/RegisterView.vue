@@ -144,187 +144,161 @@ const handleRegister = async () => {
 
 <template>
   <section class="auth-shell">
-    <div class="auth-card auth-card-wide">
-      <aside class="auth-brand">
-        <div class="brand-badge">
-          <img :src="logoUrl" alt="MyCure" />
+    <section class="auth-card">
+      <div class="brand-badge">
+        <img :src="logoUrl" alt="MyCure" />
+      </div>
+
+      <div class="panel-head">
+        <h1>Create Account</h1>
+        <p class="muted-copy">Fill in your details to register</p>
+      </div>
+
+      <transition name="fade">
+        <div v-if="errorMessage" class="alert alert-error" role="alert">{{ errorMessage }}</div>
+      </transition>
+
+      <transition name="fade">
+        <div v-if="successMessage" class="alert alert-success" role="status">
+          {{ successMessage }}
         </div>
-        <p class="eyebrow">Create Account</p>
-        <h1>Join MyCure</h1>
-        <p class="brand-copy">
-          Register once to manage appointments, health records, notifications, and your clinic
-          interactions from a single account.
-        </p>
-      </aside>
+      </transition>
 
-      <section class="auth-panel">
-        <div class="panel-head">
-          <p class="eyebrow">New patient account</p>
-          <h2>Registration</h2>
-          <p class="muted-copy">Complete the form below to create your MyCure account.</p>
-        </div>
-
-        <transition name="fade">
-          <div v-if="errorMessage" class="alert alert-error" role="alert">{{ errorMessage }}</div>
-        </transition>
-
-        <transition name="fade">
-          <div v-if="successMessage" class="alert alert-success" role="status">
-            {{ successMessage }}
-          </div>
-        </transition>
-
-        <form class="auth-form" novalidate @submit.prevent="handleRegister">
-          <div class="section-grid">
-            <div class="section-head">Personal Information</div>
-
-            <label class="form-field">
-              <span>First name</span>
-              <input v-model.trim="form.firstName" type="text" placeholder="Aisha" required />
-              <small v-if="errors.firstName" class="field-error">{{ errors.firstName }}</small>
-            </label>
-
-            <label class="form-field">
-              <span>Last name</span>
-              <input v-model.trim="form.lastName" type="text" placeholder="Tan" required />
-              <small v-if="errors.lastName" class="field-error">{{ errors.lastName }}</small>
-            </label>
-
-            <label class="form-field">
-              <span>Date of birth</span>
-              <input v-model="form.dateOfBirth" type="date" required />
-              <small v-if="errors.dateOfBirth" class="field-error">{{ errors.dateOfBirth }}</small>
-            </label>
-
-            <label class="form-field">
-              <span>Gender</span>
-              <select v-model="form.gender" required>
-                <option value="" disabled>Select gender</option>
-                <option value="female">Female</option>
-                <option value="male">Male</option>
-                <option value="other">Other</option>
-                <option value="prefer_not_to_say">Prefer not to say</option>
-              </select>
-              <small v-if="errors.gender" class="field-error">{{ errors.gender }}</small>
-            </label>
-
-            <label class="form-field">
-              <span>IC / Passport Number</span>
-              <input
-                v-model.trim="form.icPassportNumber"
-                type="text"
-                placeholder="900101-13-1234"
-                required
-              />
-              <small v-if="errors.icPassportNumber" class="field-error">{{ errors.icPassportNumber }}</small>
-            </label>
-
-            <label class="form-field">
-              <span>Phone number</span>
-              <input
-                v-model.trim="form.phone"
-                type="tel"
-                placeholder="+60 12 345 6789"
-                required
-              />
-              <small v-if="errors.phone" class="field-error">{{ errors.phone }}</small>
-            </label>
-
-            <label class="form-field form-field-wide">
-              <span>Email address</span>
-              <input
-                v-model.trim="form.email"
-                type="email"
-                placeholder="you@example.com"
-                required
-              />
-              <small v-if="errors.email" class="field-error">{{ errors.email }}</small>
-            </label>
-
-            <label class="form-field form-field-wide">
-              <span>Home address</span>
-              <textarea
-                v-model.trim="form.homeAddress"
-                rows="3"
-                placeholder="Street, city, postcode, state"
-                required
-              />
-              <small v-if="errors.homeAddress" class="field-error">{{ errors.homeAddress }}</small>
-            </label>
-
-            <label class="form-field form-field-wide">
-              <span>Profile photo</span>
-              <input type="file" accept="image/*" @change="handlePhotoChange" />
-              <small class="field-hint">
-                {{ form.photo ? form.photo.name : 'Upload PNG, JPG, or GIF up to 2MB.' }}
-              </small>
-              <small v-if="errors.photo" class="field-error">{{ errors.photo }}</small>
-            </label>
-          </div>
-
-          <div class="section-grid">
-            <div class="section-head">Security</div>
-
-            <label class="form-field">
-              <span>Password</span>
-              <div class="password-shell">
-                <input
-                  v-model="form.password"
-                  :type="showPassword ? 'text' : 'password'"
-                  placeholder="Create password"
-                  minlength="6"
-                  required
-                />
-                <button type="button" class="password-toggle" @click="showPassword = !showPassword">
-                  {{ showPassword ? 'Hide' : 'Show' }}
-                </button>
-              </div>
-              <small class="field-hint">At least 6 characters.</small>
-              <small v-if="errors.password" class="field-error">{{ errors.password }}</small>
-            </label>
-
-            <label class="form-field">
-              <span>Confirm password</span>
-              <div class="password-shell">
-                <input
-                  v-model="form.confirmPassword"
-                  :type="showConfirmPassword ? 'text' : 'password'"
-                  placeholder="Confirm password"
-                  minlength="6"
-                  required
-                />
-                <button
-                  type="button"
-                  class="password-toggle"
-                  @click="showConfirmPassword = !showConfirmPassword"
-                >
-                  {{ showConfirmPassword ? 'Hide' : 'Show' }}
-                </button>
-              </div>
-              <small v-if="errors.confirmPassword" class="field-error">{{ errors.confirmPassword }}</small>
-            </label>
-          </div>
-
-          <label class="checkbox-row">
-            <input v-model="form.agreeToTerms" type="checkbox" required />
-            <span>I agree to the terms and conditions and privacy policy.</span>
+      <form class="auth-form" novalidate @submit.prevent="handleRegister">
+        <div class="field-grid">
+          <label class="form-field">
+            <span>First name</span>
+            <input v-model.trim="form.firstName" type="text" placeholder="First name" required />
+            <small v-if="errors.firstName" class="field-error">{{ errors.firstName }}</small>
           </label>
-          <small v-if="errors.agreeToTerms" class="field-error">{{ errors.agreeToTerms }}</small>
 
-          <button type="submit" class="primary-action" :disabled="isSubmitting">
-            {{ isSubmitting ? 'Creating account...' : 'Create account' }}
-          </button>
-        </form>
-
-        <div class="panel-footer">
-          <p>
-            Already have an account?
-            <RouterLink :to="{ name: 'login' }">Sign in</RouterLink>
-          </p>
-          <RouterLink :to="{ name: 'landing' }" class="back-link">Back to home</RouterLink>
+          <label class="form-field">
+            <span>Last name</span>
+            <input v-model.trim="form.lastName" type="text" placeholder="Last name" required />
+            <small v-if="errors.lastName" class="field-error">{{ errors.lastName }}</small>
+          </label>
         </div>
-      </section>
-    </div>
+
+        <div class="field-grid">
+          <label class="form-field">
+            <span>Date of birth</span>
+            <input v-model="form.dateOfBirth" type="date" required />
+            <small v-if="errors.dateOfBirth" class="field-error">{{ errors.dateOfBirth }}</small>
+          </label>
+
+          <label class="form-field">
+            <span>Gender</span>
+            <select v-model="form.gender" required>
+              <option value="" disabled>Select gender</option>
+              <option value="female">Female</option>
+              <option value="male">Male</option>
+              <option value="other">Other</option>
+              <option value="prefer_not_to_say">Prefer not to say</option>
+            </select>
+            <small v-if="errors.gender" class="field-error">{{ errors.gender }}</small>
+          </label>
+        </div>
+
+        <label class="form-field">
+          <span>IC / Passport Number</span>
+          <input
+            v-model.trim="form.icPassportNumber"
+            type="text"
+            placeholder="IC / Passport Number"
+            required
+          />
+          <small v-if="errors.icPassportNumber" class="field-error">{{ errors.icPassportNumber }}</small>
+        </label>
+
+        <label class="form-field">
+          <span>Phone number</span>
+          <input v-model.trim="form.phone" type="tel" placeholder="Phone number" required />
+          <small v-if="errors.phone" class="field-error">{{ errors.phone }}</small>
+        </label>
+
+        <label class="form-field">
+          <span>Email</span>
+          <input v-model.trim="form.email" type="email" placeholder="Email" required />
+          <small v-if="errors.email" class="field-error">{{ errors.email }}</small>
+        </label>
+
+        <label class="form-field">
+          <span>Home address</span>
+          <textarea
+            v-model.trim="form.homeAddress"
+            rows="3"
+            placeholder="Home address"
+            required
+          />
+          <small v-if="errors.homeAddress" class="field-error">{{ errors.homeAddress }}</small>
+        </label>
+
+        <label class="form-field file-field">
+          <span>Profile photo</span>
+          <input type="file" accept="image/*" @change="handlePhotoChange" />
+          <small class="field-hint">
+            {{ form.photo ? form.photo.name : 'Upload profile photo (max 2MB)' }}
+          </small>
+          <small v-if="errors.photo" class="field-error">{{ errors.photo }}</small>
+        </label>
+
+        <label class="form-field">
+          <span>Password</span>
+          <div class="password-shell">
+            <input
+              v-model="form.password"
+              :type="showPassword ? 'text' : 'password'"
+              placeholder="Password"
+              minlength="6"
+              required
+            />
+            <button type="button" class="password-toggle" @click="showPassword = !showPassword">
+              {{ showPassword ? 'Hide' : 'Show' }}
+            </button>
+          </div>
+          <small v-if="errors.password" class="field-error">{{ errors.password }}</small>
+        </label>
+
+        <label class="form-field">
+          <span>Confirm password</span>
+          <div class="password-shell">
+            <input
+              v-model="form.confirmPassword"
+              :type="showConfirmPassword ? 'text' : 'password'"
+              placeholder="Confirm password"
+              minlength="6"
+              required
+            />
+            <button
+              type="button"
+              class="password-toggle"
+              @click="showConfirmPassword = !showConfirmPassword"
+            >
+              {{ showConfirmPassword ? 'Hide' : 'Show' }}
+            </button>
+          </div>
+          <small v-if="errors.confirmPassword" class="field-error">{{ errors.confirmPassword }}</small>
+        </label>
+
+        <label class="checkbox-row">
+          <input v-model="form.agreeToTerms" type="checkbox" required />
+          <span>I agree to the terms and conditions and privacy policy.</span>
+        </label>
+        <small v-if="errors.agreeToTerms" class="field-error">{{ errors.agreeToTerms }}</small>
+
+        <button type="submit" class="primary-action" :disabled="isSubmitting">
+          {{ isSubmitting ? 'Creating account...' : 'Create Account' }}
+        </button>
+      </form>
+
+      <div class="panel-footer">
+        <p>
+          Already have an account?
+          <RouterLink :to="{ name: 'login' }">Sign in</RouterLink>
+        </p>
+        <RouterLink :to="{ name: 'landing' }" class="back-link">Back to home</RouterLink>
+      </div>
+    </section>
   </section>
 </template>
 
@@ -334,102 +308,61 @@ const handleRegister = async () => {
   display: grid;
   place-items: center;
   padding: 1.5rem;
-  background:
-    radial-gradient(circle at top left, rgba(14, 165, 233, 0.16), transparent 28%),
-    radial-gradient(circle at bottom right, rgba(34, 197, 94, 0.12), transparent 24%),
-    linear-gradient(180deg, #f5fbff 0%, #eef6ff 100%);
+  background: linear-gradient(180deg, #f8fbff 0%, #eef4ff 100%);
 }
 
 .auth-card {
-  width: min(100%, 1120px);
+  width: min(100%, 700px);
   display: grid;
-  border: 1px solid #dbe7f3;
-  border-radius: 28px;
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 28px 80px rgba(15, 23, 42, 0.12);
-  overflow: hidden;
-}
-
-.auth-brand,
-.auth-panel {
-  display: grid;
-  gap: 1rem;
-  padding: 1.75rem;
-}
-
-.auth-brand {
-  background:
-    linear-gradient(150deg, rgba(14, 165, 233, 0.96), rgba(2, 132, 199, 0.88)),
-    linear-gradient(180deg, #0f8fc8 0%, #2563eb 100%);
-  color: #ffffff;
-  align-content: center;
+  gap: 1.25rem;
+  border: 1px solid #e6ebf5;
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 2rem 1.5rem;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
 }
 
 .brand-badge {
-  width: 4.5rem;
-  height: 4.5rem;
+  width: 3rem;
+  height: 3rem;
   display: grid;
   place-items: center;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.16);
-  backdrop-filter: blur(12px);
+  margin-inline: auto;
+  border-radius: 14px;
+  background: #f4f8ff;
 }
 
 .brand-badge img {
-  width: 2.8rem;
-  height: 2.8rem;
-}
-
-.eyebrow {
-  font-size: 0.76rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.auth-brand h1,
-.panel-head h2 {
-  margin: 0;
-  font-weight: 900;
-  line-height: 1.05;
-}
-
-.auth-brand h1 {
-  font-size: clamp(2rem, 4vw, 3rem);
-}
-
-.brand-copy {
-  margin: 0;
-  max-width: 34ch;
-  color: rgba(255, 255, 255, 0.82);
-  line-height: 1.7;
-}
-
-.auth-panel {
-  align-content: start;
+  width: 1.9rem;
+  height: 1.9rem;
 }
 
 .panel-head {
   display: grid;
-  gap: 0.35rem;
+  gap: 0.5rem;
+  justify-items: center;
+  text-align: center;
 }
 
-.panel-head h2 {
-  color: #0f172a;
-  font-size: clamp(1.8rem, 3vw, 2.3rem);
+.panel-head h1 {
+  margin: 0;
+  color: #1f2937;
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1.1;
 }
 
 .muted-copy,
 .panel-footer p,
-.back-link,
 .field-hint {
-  color: #5b6576;
+  color: #94a3b8;
+  font-size: 0.88rem;
 }
 
 .alert {
-  padding: 0.9rem 1rem;
-  border-radius: 14px;
-  font-size: 0.92rem;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  font-size: 0.88rem;
   font-weight: 700;
 }
 
@@ -447,52 +380,40 @@ const handleRegister = async () => {
 
 .auth-form {
   display: grid;
-  gap: 1rem;
+  gap: 0.9rem;
 }
 
-.section-grid {
+.field-grid {
   display: grid;
-  gap: 1rem;
-  padding: 1rem;
-  border: 1px solid #e8edf3;
-  border-radius: 18px;
-  background: #fbfdff;
-}
-
-.section-head {
-  color: #0f172a;
-  font-size: 0.82rem;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  gap: 0.9rem;
 }
 
 .form-field {
   display: grid;
-  gap: 0.45rem;
+  gap: 0.35rem;
 }
 
 .form-field span {
-  color: #0f172a;
-  font-size: 0.9rem;
-  font-weight: 800;
+  color: #475569;
+  font-size: 0.82rem;
+  font-weight: 700;
 }
 
 .form-field input,
 .form-field select,
 .form-field textarea {
   width: 100%;
-  min-height: 3rem;
-  border: 1px solid #d8e0ea;
-  border-radius: 14px;
+  min-height: 2.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
   background: #ffffff;
-  color: #0f172a;
+  color: #1f2937;
   font: inherit;
-  padding: 0.85rem 0.95rem;
+  padding: 0.75rem 0.9rem;
 }
 
 .form-field textarea {
-  min-height: 6rem;
+  min-height: 5.5rem;
   resize: vertical;
 }
 
@@ -500,8 +421,8 @@ const handleRegister = async () => {
 .form-field select:focus,
 .form-field textarea:focus {
   outline: none;
-  border-color: #0f8fc8;
-  box-shadow: 0 0 0 3px rgba(15, 143, 200, 0.12);
+  border-color: #6a8af7;
+  box-shadow: 0 0 0 3px rgba(106, 138, 247, 0.12);
 }
 
 .password-shell {
@@ -509,7 +430,7 @@ const handleRegister = async () => {
 }
 
 .password-shell input {
-  padding-right: 4.5rem;
+  padding-right: 4.75rem;
 }
 
 .password-toggle {
@@ -519,47 +440,47 @@ const handleRegister = async () => {
   transform: translateY(-50%);
   border: 0;
   background: transparent;
-  color: #2563eb;
-  font-size: 0.85rem;
-  font-weight: 800;
+  color: #94a3b8;
+  font-size: 0.78rem;
+  font-weight: 700;
 }
 
 .field-error {
   color: #be123c;
-  font-size: 0.84rem;
+  font-size: 0.8rem;
   font-weight: 700;
 }
 
 .field-hint {
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-weight: 600;
 }
 
 .checkbox-row {
-  display: flex;
+  display: inline-flex;
   align-items: flex-start;
-  gap: 0.7rem;
-  color: #0f172a;
-  font-weight: 700;
-  line-height: 1.55;
+  gap: 0.55rem;
+  color: #94a3b8;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.45;
 }
 
 .checkbox-row input {
-  width: 18px;
-  height: 18px;
-  margin-top: 0.2rem;
-  accent-color: #0f8fc8;
+  width: 0.85rem;
+  height: 0.85rem;
+  margin-top: 0.15rem;
+  accent-color: #5b7cf2;
 }
 
 .primary-action {
-  min-height: 3rem;
+  min-height: 2.75rem;
   border: 0;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #0f8fc8, #2563eb);
+  border-radius: 8px;
+  background: #5b7cf2;
   color: #ffffff;
-  font-size: 0.95rem;
-  font-weight: 800;
-  box-shadow: 0 16px 28px rgba(37, 99, 235, 0.2);
+  font-size: 0.9rem;
+  font-weight: 700;
 }
 
 .primary-action:disabled {
@@ -568,24 +489,24 @@ const handleRegister = async () => {
 
 .panel-footer {
   display: grid;
-  gap: 0.9rem;
-  border-top: 1px solid #e5e7eb;
-  padding-top: 1.25rem;
+  gap: 0.65rem;
+  text-align: center;
 }
 
 .panel-footer p {
   margin: 0;
+  font-size: 0.8rem;
   font-weight: 600;
 }
 
 .panel-footer a {
-  color: #2563eb;
-  font-weight: 800;
+  color: #5b7cf2;
+  font-weight: 700;
   text-decoration: none;
 }
 
 .back-link {
-  font-size: 0.92rem;
+  font-size: 0.82rem;
 }
 
 .fade-enter-active,
@@ -598,23 +519,9 @@ const handleRegister = async () => {
   opacity: 0;
 }
 
-@media (min-width: 900px) {
-  .auth-card {
-    grid-template-columns: minmax(320px, 0.88fr) minmax(0, 1.12fr);
-  }
-
-  .auth-brand,
-  .auth-panel {
-    padding: 2.25rem;
-  }
-
-  .section-grid {
+@media (min-width: 640px) {
+  .field-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .section-head,
-  .form-field-wide {
-    grid-column: 1 / -1;
   }
 }
 
@@ -624,12 +531,7 @@ const handleRegister = async () => {
   }
 
   .auth-card {
-    border-radius: 22px;
-  }
-
-  .auth-brand,
-  .auth-panel {
-    padding: 1.25rem;
+    padding: 1.5rem 1rem;
   }
 
   .form-field input,

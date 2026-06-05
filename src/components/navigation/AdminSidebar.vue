@@ -23,6 +23,7 @@ const navigationItems = [
   { label: 'Availability', to: { name: 'admin-availability' }, icon: 'availability' },
   { label: 'Notifications', to: { name: 'admin-notifications' }, icon: 'notifications' },
   { label: 'Clinic Info', to: { name: 'admin-clinic-info' }, icon: 'clinic' },
+  { label: 'Gemini Chat', to: { name: 'admin-gemini-chat' }, icon: 'chat' },
 ]
 
 const iconPaths = {
@@ -41,6 +42,8 @@ const iconPaths = {
     'M10 3.5a4 4 0 0 1 4 4v2.2c0 .8.3 1.6.8 2.3l1 1.2c.4.5.1 1.3-.6 1.3H4.8c-.7 0-1-.8-.6-1.3l1-1.2c.5-.7.8-1.5.8-2.3V7.5a4 4 0 0 1 4-4Zm-1.8 14a1.8 1.8 0 0 0 3.6 0',
   clinic:
     'M3.5 17V6.5a2 2 0 0 1 2-2H14.5a2 2 0 0 1 2 2V17M7 17v-3.5h6V17M7.5 8h1m3 0h1m-5 2.5h1m3 0h1',
+  chat:
+    'M4 5.5h12a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H9l-3.5 2.8c-.6.4-1.5 0-1.5-.8V15.5H4a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2Z',
 }
 
 const storedUser = computed(() => {

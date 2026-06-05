@@ -20,17 +20,17 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      redirect: { name: 'login' },
-    },
-    {
-      path: '/',
       component: () => import('../layouts/PublicLayout.vue'),
       children: [
         {
-          path: 'home',
+          path: '',
           name: 'landing',
           component: () => import('../views/LandingView.vue'),
           meta: { title: 'MyCure Web' },
+        },
+        {
+          path: 'home',
+          redirect: { name: 'landing' },
         },
         {
           path: 'about-us',
@@ -59,6 +59,18 @@ const router = createRouter({
       meta: { title: 'Login' },
     },
     {
+      path: '/forgot-password',
+      name: 'forgot-password',
+      component: () => import('../views/auth/ForgotPasswordView.vue'),
+      meta: { title: 'Forgot Password' },
+    },
+    {
+      path: '/reset-password',
+      name: 'reset-password',
+      component: () => import('../views/auth/ResetPasswordView.vue'),
+      meta: { title: 'Reset Password' },
+    },
+    {
       path: '/register',
       name: 'register',
       component: () => import('../views/auth/RegisterView.vue'),
@@ -83,6 +95,18 @@ const router = createRouter({
           name: 'services',
           component: () => import('../views/app/ServicesView.vue'),
           meta: { title: 'Services' },
+        },
+        {
+          path: 'clinic-and-doctor-info',
+          name: 'clinic-and-doctor-info',
+          component: () => import('../views/app/ClinicDoctorInfoView.vue'),
+          meta: { title: 'Clinic and Doctor Info' },
+        },
+        {
+          path: 'gemini-chat',
+          name: 'gemini-chat',
+          component: () => import('../views/shared/GeminiChatView.vue'),
+          meta: { title: 'Gemini Chat', chatAudience: 'patient' },
         },
         {
           path: 'symptom-checker',
@@ -250,6 +274,12 @@ const router = createRouter({
           name: 'admin-doctor-profile',
           component: () => import('../views/admin/AdminDoctorProfileView.vue'),
           meta: { title: 'Doctor Profile' },
+        },
+        {
+          path: 'gemini-chat',
+          name: 'admin-gemini-chat',
+          component: () => import('../views/shared/GeminiChatView.vue'),
+          meta: { title: 'Gemini Chat', chatAudience: 'doctor' },
         },
       ],
     },
