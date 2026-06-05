@@ -78,7 +78,7 @@ const posts = [
         <p class="eyebrow">Clinic Service</p>
         <h1 id="landing-title">Healthcare Made Simple & Accessible</h1>
         <p>Expert doctors, modern treatment, and friendly service all in one place.</p>
-        <RouterLink class="action-button" :to="{ name: 'register' }">
+        <RouterLink class="action-button" :to="{ name: 'login' }">
           Book appointment
           <span aria-hidden="true">›</span>
         </RouterLink>
@@ -118,7 +118,7 @@ const posts = [
           everyone. We believe caring for patients is more than treatment; it is a relationship
           built on trust, clear guidance, and compassionate care.
         </p>
-        <RouterLink class="action-button" :to="{ name: 'register' }">
+        <RouterLink class="action-button" :to="{ name: 'login' }">
           Book appointment
           <span aria-hidden="true">›</span>
         </RouterLink>
@@ -211,7 +211,7 @@ const posts = [
           <textarea aria-label="Message" placeholder="Message (optional)"></textarea>
         </form>
 
-        <RouterLink class="action-button" :to="{ name: 'register' }">
+        <RouterLink class="action-button" :to="{ name: 'login' }">
           Book appointment
           <span aria-hidden="true">›</span>
         </RouterLink>

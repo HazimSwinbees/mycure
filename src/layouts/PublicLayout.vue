@@ -30,7 +30,7 @@ const route = useRoute()
         <RouterLink :to="{ name: 'landing', hash: '#faq' }">FAQ</RouterLink>
         <RouterLink :to="{ name: 'landing', hash: '#blogs' }">Blogs</RouterLink>
         <RouterLink class="login-link" :to="{ name: 'login' }">Login</RouterLink>
-        <RouterLink class="appointment-link" :to="{ name: 'register' }">
+        <RouterLink class="appointment-link" :to="{ name: 'login' }">
           Book appointment
           <span aria-hidden="true">›</span>
         </RouterLink>
