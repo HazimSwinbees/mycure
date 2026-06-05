@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # MyCure
 
 This template should help get you started developing with Vue 3 in Vite.
@@ -36,3 +37,7 @@ npm run dev
 ```sh
 npm run build
 ```
+=======
+# mycure
+clinic booking system
+>>>>>>> 8a67e77fa156e4af348143ad9710295bd0273fcc
