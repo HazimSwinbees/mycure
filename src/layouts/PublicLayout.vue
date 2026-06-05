@@ -38,7 +38,7 @@ const route = useRoute()
     </header>
 
     <main class="public-main">
-      <RouterView />
+      <RouterView :key="route.fullPath" />
     </main>
   </div>
 </template>
