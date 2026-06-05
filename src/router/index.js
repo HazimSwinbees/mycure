@@ -20,12 +20,12 @@ const router = createRouter({
   routes: [
     {
       path: '/',
+      redirect: { name: 'login' },
+    },
+    {
+      path: '/',
       component: () => import('../layouts/PublicLayout.vue'),
       children: [
-        {
-          path: '',
-          redirect: { name: 'login' },
-        },
         {
           path: 'home',
           name: 'landing',
@@ -50,19 +50,19 @@ const router = createRouter({
           component: () => import('../views/TermsConditionsView.vue'),
           meta: { title: 'Terms and Conditions' },
         },
-        {
-          path: 'login',
-          name: 'login',
-          component: () => import('../views/auth/LoginView.vue'),
-          meta: { title: 'Login' },
-        },
-        {
-          path: 'register',
-          name: 'register',
-          component: () => import('../views/auth/RegisterView.vue'),
-          meta: { title: 'Register' },
-        },
       ],
+    },
+    {
+      path: '/login',
+      name: 'login',
+      component: () => import('../views/auth/LoginView.vue'),
+      meta: { title: 'Login' },
+    },
+    {
+      path: '/register',
+      name: 'register',
+      component: () => import('../views/auth/RegisterView.vue'),
+      meta: { title: 'Register' },
     },
     {
       path: '/app',
