@@ -1,8 +1,12 @@
 <script setup>
+import { computed } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import logoUrl from '../assets/mycure-logo.png'
 
 const route = useRoute()
+const bookingTarget = computed(() =>
+  localStorage.getItem('mycure_role') === 'doctor' ? { name: 'admin-dashboard' } : { name: 'booking' },
+)
 </script>
 
 <template>
@@ -26,7 +30,7 @@ const route = useRoute()
       <nav class="public-nav">
         <RouterLink class="login-link" :to="{ name: 'login' }">Login</RouterLink>
         <RouterLink class="register-link" :to="{ name: 'register' }">Register</RouterLink>
-        <RouterLink class="appointment-link" :to="{ name: 'booking' }">Book appointment</RouterLink>
+        <RouterLink class="appointment-link" :to="bookingTarget">Book appointment</RouterLink>
       </nav>
     </header>
 

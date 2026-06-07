@@ -1,6 +1,8 @@
 import { supabase } from '../lib/supabaseClient'
 
 const doctorProfilesTable = 'doctor_profiles'
+const doctorPhotosBucket = 'doctor-photos'
+const fallbackPhotosBucket = 'patient-photos'
 
 const defaultDoctorProfile = {
   id: '',
@@ -30,6 +32,8 @@ const toArray = (value) => {
   return []
 }
 
+const sanitizeFileName = (name) => name.replace(/[^a-zA-Z0-9._-]/g, '_')
+
 const mapDoctorProfile = (record) => ({
   id: record?.id || defaultDoctorProfile.id,
   fullName: record?.full_name || defaultDoctorProfile.fullName,
@@ -48,6 +52,34 @@ const mapDoctorProfile = (record) => ({
   about: record?.about || defaultDoctorProfile.about,
   photoUrl: record?.photo_url || defaultDoctorProfile.photoUrl,
 })
+
+const uploadDoctorPhoto = async (userId, photo) => {
+  if (!photo) {
+    return ''
+  }
+
+  const photoPath = `${userId}/${Date.now()}-${sanitizeFileName(photo.name)}`
+
+  for (const bucketName of [doctorPhotosBucket, fallbackPhotosBucket]) {
+    const { error: uploadError } = await supabase.storage
+      .from(bucketName)
+      .upload(photoPath, photo, {
+        contentType: photo.type,
+        upsert: true,
+      })
+
+    if (!uploadError) {
+      const { data } = supabase.storage.from(bucketName).getPublicUrl(photoPath)
+      return data.publicUrl || ''
+    }
+
+    if (!/bucket not found/i.test(uploadError.message || '')) {
+      throw new Error(uploadError.message)
+    }
+  }
+
+  throw new Error('Photo storage bucket was not found.')
+}
 
 const getCurrentDoctorUser = async () => {
   const { data, error } = await supabase.auth.getUser()
@@ -113,8 +145,10 @@ export const updateCurrentDoctorProfile = async ({
   workingHours,
   about,
   photoUrl,
+  photoFile,
 }) => {
   const user = await getCurrentDoctorUser()
+  const uploadedPhotoUrl = photoFile ? await uploadDoctorPhoto(user.id, photoFile) : ''
 
   const payload = {
     id: user.id,
@@ -130,7 +164,7 @@ export const updateCurrentDoctorProfile = async ({
       ? toArray(workingHours)
       : defaultDoctorProfile.workingHours,
     about: String(about || '').trim() || defaultDoctorProfile.about,
-    photo_url: String(photoUrl || '').trim(),
+    photo_url: uploadedPhotoUrl || String(photoUrl || '').trim(),
     updated_at: new Date().toISOString(),
   }
 

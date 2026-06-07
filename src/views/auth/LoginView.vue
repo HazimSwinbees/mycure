@@ -40,12 +40,17 @@ const handleLogin = async () => {
     localStorage.setItem('mycure_role', role)
     localStorage.setItem('mycure_user', JSON.stringify(user))
 
+    if (role === 'doctor') {
+      router.push('/admin/dashboard')
+      return
+    }
+
     if (redirectTarget.value) {
       router.push(redirectTarget.value)
       return
     }
 
-    router.push(role === 'doctor' ? '/admin/dashboard' : '/app/dashboard')
+    router.push('/app/dashboard')
   } catch (error) {
     errorMessage.value = error.message || 'Login failed. Please check your credentials and try again.'
   } finally {

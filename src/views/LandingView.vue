@@ -1,5 +1,11 @@
 <script setup>
+import { computed } from 'vue'
+
 const partners = ['Diligent', 'Eclipse', 'Brilliant', 'Polaris', 'Ignite', 'Fusion']
+
+const bookingTarget = computed(() =>
+  localStorage.getItem('mycure_role') === 'doctor' ? { name: 'admin-dashboard' } : { name: 'booking' },
+)
 
 const faqs = [
   {
@@ -36,7 +42,7 @@ const faqs = [
         <p class="eyebrow">Clinic Service</p>
         <h1 id="landing-title">Healthcare Made Simple and Accessible</h1>
         <p>Expert doctors, modern treatment, and friendly service all in one place.</p>
-        <RouterLink class="action-button" :to="{ name: 'booking' }">Book appointment</RouterLink>
+        <RouterLink class="action-button" :to="bookingTarget">Book appointment</RouterLink>
       </div>
       <img
         class="hero-image"
@@ -73,7 +79,7 @@ const faqs = [
           everyone. We believe caring for patients is more than treatment; it is a relationship
           built on trust, clear guidance, and compassionate care.
         </p>
-        <RouterLink class="action-button" :to="{ name: 'booking' }">Book appointment</RouterLink>
+        <RouterLink class="action-button" :to="bookingTarget">Book appointment</RouterLink>
 
         <dl class="stats-grid">
           <div>

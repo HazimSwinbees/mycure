@@ -299,6 +299,12 @@ const router = createRouter({
 router.beforeEach((to) => {
   document.title = to.meta.title ? `${to.meta.title} | MyCure Web` : 'MyCure Web'
 
+  const role = localStorage.getItem('mycure_role') || 'patient'
+
+  if (role === 'doctor' && ['booking', 'booking-confirmation', 'booking-success'].includes(to.name)) {
+    return { name: 'admin-dashboard' }
+  }
+
   if (!to.meta.requiresAuth) {
     return true
   }

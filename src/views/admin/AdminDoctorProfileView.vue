@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import {
   getCurrentDoctorProfile,
   updateCurrentDoctorProfile,
@@ -21,8 +21,10 @@ const profileForm = reactive({
   specializations: '',
   workingHours: '',
   about: '',
-  photoUrl: '',
 })
+const photoFile = ref(null)
+const photoPreview = ref('')
+let photoPreviewObjectUrl = ''
 
 const initials = computed(() => {
   const fullName = doctor.value?.fullName || 'Doctor'
@@ -61,6 +63,11 @@ const loadDoctorProfile = async () => {
 }
 
 const openEditor = () => {
+  if (photoPreviewObjectUrl) {
+    URL.revokeObjectURL(photoPreviewObjectUrl)
+    photoPreviewObjectUrl = ''
+  }
+
   profileForm.fullName = doctor.value?.fullName || ''
   profileForm.roleTitle = doctor.value?.roleTitle || ''
   profileForm.qualification = doctor.value?.qualification || ''
@@ -69,13 +76,20 @@ const openEditor = () => {
   profileForm.specializations = doctor.value?.specializations?.join('\n') || ''
   profileForm.workingHours = doctor.value?.workingHours?.join('\n') || ''
   profileForm.about = doctor.value?.about || ''
-  profileForm.photoUrl = doctor.value?.photoUrl || ''
+  photoFile.value = null
+  photoPreview.value = doctor.value?.photoUrl || ''
   saveError.value = ''
   activeEditor.value = 'profile'
 }
 
 const closeEditor = () => {
   if (isSaving.value) return
+
+  if (photoPreviewObjectUrl) {
+    URL.revokeObjectURL(photoPreviewObjectUrl)
+    photoPreviewObjectUrl = ''
+  }
+
   activeEditor.value = ''
   saveError.value = ''
 }
@@ -94,8 +108,15 @@ const saveProfile = async () => {
       specializations: profileForm.specializations,
       workingHours: profileForm.workingHours,
       about: profileForm.about,
-      photoUrl: profileForm.photoUrl,
+      photoUrl: doctor.value?.photoUrl || '',
+      photoFile: photoFile.value,
     })
+    if (photoPreviewObjectUrl) {
+      URL.revokeObjectURL(photoPreviewObjectUrl)
+      photoPreviewObjectUrl = ''
+    }
+    photoFile.value = null
+    photoPreview.value = doctor.value?.photoUrl || ''
     closeEditor()
   } catch (error) {
     saveError.value = error.message || 'Unable to save doctor profile.'
@@ -104,7 +125,33 @@ const saveProfile = async () => {
   }
 }
 
+const handlePhotoChange = (event) => {
+  const [file] = event.target.files || []
+
+  photoFile.value = file || null
+
+  if (photoPreviewObjectUrl) {
+    URL.revokeObjectURL(photoPreviewObjectUrl)
+    photoPreviewObjectUrl = ''
+  }
+
+  if (!file) {
+    photoPreview.value = doctor.value?.photoUrl || ''
+    return
+  }
+
+  photoPreviewObjectUrl = URL.createObjectURL(file)
+  photoPreview.value = photoPreviewObjectUrl
+}
+
 onMounted(loadDoctorProfile)
+
+onBeforeUnmount(() => {
+  if (photoPreviewObjectUrl) {
+    URL.revokeObjectURL(photoPreviewObjectUrl)
+    photoPreviewObjectUrl = ''
+  }
+})
 </script>
 
 <template>
@@ -233,9 +280,17 @@ onMounted(loadDoctorProfile)
             </label>
 
             <label class="form-field form-field-wide">
-              <span>Profile picture URL</span>
-              <input v-model="profileForm.photoUrl" type="text" placeholder="Optional image URL" />
+              <span>Profile picture</span>
+              <input type="file" accept="image/*" @change="handlePhotoChange" />
             </label>
+
+            <div class="photo-preview form-field-wide">
+              <span>Preview</span>
+              <div class="photo-preview-box">
+                <img v-if="photoPreview" :src="photoPreview" alt="" />
+                <span v-else>{{ initials }}</span>
+              </div>
+            </div>
 
             <label class="form-field form-field-wide">
               <span>Qualification</span>
@@ -518,6 +573,31 @@ onMounted(loadDoctorProfile)
   color: #4b5563;
   font-size: 0.88rem;
   font-weight: 600;
+}
+
+.photo-preview {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.photo-preview-box {
+  display: grid;
+  width: 96px;
+  height: 96px;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid #dbe2ea;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #f8fbff 0%, #eef4ff 100%);
+  color: #3157b7;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.photo-preview-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .form-field input,
