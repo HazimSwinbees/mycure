@@ -5,6 +5,7 @@ import {
   getCurrentPatientAppointmentById,
   updateCurrentPatientAppointmentStatus,
 } from '../../services/appointmentApi'
+import { getCurrentPatientMedicalRecordByAppointmentId } from '../../services/medicalRecordApi'
 
 const props = defineProps({
   id: {
@@ -19,6 +20,7 @@ const errorMessage = ref('')
 const saveError = ref('')
 const isSaving = ref(false)
 const showCancelModal = ref(false)
+const medicalRecordId = ref('')
 
 const reasonForm = reactive({
   reason: '',
@@ -26,6 +28,9 @@ const reasonForm = reactive({
 
 const canCancel = computed(() =>
   ['Pending', 'Confirmed'].includes(appointment.value?.status),
+)
+const canViewRecord = computed(() =>
+  appointment.value?.status === 'Completed' && Boolean(medicalRecordId.value),
 )
 
 const statusLabelClass = computed(() => {
@@ -42,9 +47,14 @@ const statusNoteTitle = computed(() => {
 const loadAppointment = async () => {
   isLoading.value = true
   errorMessage.value = ''
+  medicalRecordId.value = ''
 
   try {
     appointment.value = await getCurrentPatientAppointmentById(props.id)
+    if (appointment.value?.id) {
+      medicalRecordId.value =
+        (await getCurrentPatientMedicalRecordByAppointmentId(appointment.value.id)) || ''
+    }
   } catch (error) {
     errorMessage.value = error.message || 'Unable to load the appointment right now.'
   } finally {
@@ -144,10 +154,6 @@ onMounted(loadAppointment)
             <span>Duration</span>
             <strong>{{ appointment.duration }}</strong>
           </article>
-          <article class="summary-row">
-            <span>Reference</span>
-            <strong>{{ appointment.id }}</strong>
-          </article>
         </div>
       </section>
 
@@ -214,6 +220,24 @@ onMounted(loadAppointment)
             <button class="danger-button" type="button" :disabled="isSaving" @click="openCancelModal">
               Cancel appointment
             </button>
+          </div>
+        </section>
+
+        <section v-else-if="canViewRecord" class="panel record-panel">
+          <div class="panel-head">
+            <div>
+              <p class="section-label">Medical visit</p>
+              <h2>Visit record</h2>
+            </div>
+          </div>
+
+          <div class="action-row">
+            <RouterLink
+              class="visit-record-link"
+              :to="{ name: 'medical-visit-details', params: { id: medicalRecordId } }"
+            >
+              View medical visit
+            </RouterLink>
           </div>
         </section>
       </div>
@@ -453,7 +477,8 @@ onMounted(loadAppointment)
 .danger-button,
 .modal-secondary,
 .modal-danger,
-.modal-close {
+.modal-close,
+.visit-record-link {
   cursor: pointer;
 }
 
@@ -466,6 +491,20 @@ onMounted(loadAppointment)
   border-radius: 10px;
   background: #fff1f2;
   color: #b91c1c;
+  font-size: 0.92rem;
+  font-weight: 600;
+  padding: 0.75rem 1rem;
+}
+
+.visit-record-link {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #d7e3fb;
+  border-radius: 10px;
+  background: #f5f8ff;
+  color: #3157b7;
   font-size: 0.92rem;
   font-weight: 600;
   padding: 0.75rem 1rem;

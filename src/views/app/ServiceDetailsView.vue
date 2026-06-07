@@ -66,7 +66,7 @@ onMounted(loadService)
 
       <div class="hero-actions">
         <RouterLink class="secondary-link" :to="{ name: 'services' }">Back to services</RouterLink>
-        <RouterLink class="primary-link" :to="bookingTarget">
+        <RouterLink class="primary-link" :class="{ unavailable: !service.available }" :to="bookingTarget">
           {{ service.available ? 'Book appointment' : 'View other services' }}
         </RouterLink>
       </div>
@@ -211,20 +211,57 @@ onMounted(loadService)
   align-items: center;
   justify-content: center;
   border-radius: 10px;
+  border: 1px solid #e5e7eb;
   font-size: 0.92rem;
   font-weight: 600;
   padding: 0.75rem 1rem;
+  transition:
+    border-color 180ms ease,
+    background 180ms ease,
+    color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
 }
 
 .primary-link {
-  background: #111827;
+  background: #3157b7;
+  border-color: #3157b7;
   color: #ffffff;
 }
 
 .secondary-link {
-  border: 1px solid #e5e7eb;
-  background: #ffffff;
-  color: #111827;
+  background: #f5f8ff;
+  border-color: #d7e3fb;
+  color: #3157b7;
+}
+
+.secondary-link:hover {
+  border-color: #bfd0f7;
+  background: #eef4ff;
+  color: #27479b;
+  transform: translateY(-1px);
+}
+
+.primary-link:hover {
+  background: #27479b;
+  border-color: #27479b;
+  color: #ffffff;
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.12);
+  transform: translateY(-1px);
+}
+
+.primary-link.unavailable {
+  background: #e5e7eb;
+  border-color: #e5e7eb;
+  color: #6b7280;
+}
+
+.primary-link.unavailable:hover {
+  background: #e5e7eb;
+  border-color: #e5e7eb;
+  color: #6b7280;
+  box-shadow: none;
+  transform: none;
 }
 
 .service-badge,

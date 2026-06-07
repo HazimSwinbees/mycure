@@ -1,11 +1,13 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 import AppSidebar from '../components/navigation/AppSidebar.vue'
 import AppTopbar from '../components/navigation/AppTopbar.vue'
+import { getCurrentPatientProfile } from '../services/patientApi'
 
 const route = useRoute()
 const isSidebarOpen = ref(false)
+const patientPhotoUrl = ref('')
 
 const pageTitle = computed(() => route.meta.title || 'Dashboard')
 const isStandalonePage = computed(() => Boolean(route.meta.standalone))
@@ -31,6 +33,15 @@ const closeSidebar = () => {
 const openSidebar = () => {
   isSidebarOpen.value = true
 }
+
+onMounted(async () => {
+  try {
+    const profile = await getCurrentPatientProfile()
+    patientPhotoUrl.value = profile?.photo_url || ''
+  } catch {
+    patientPhotoUrl.value = ''
+  }
+})
 </script>
 
 <template>
@@ -39,7 +50,12 @@ const openSidebar = () => {
 
     <div :class="['app-workspace', { 'standalone-workspace': isStandalonePage }]">
       <div v-if="!isStandalonePage" class="mobile-topbar">
-        <AppTopbar :title="pageTitle" :user-name="userName" @toggle-sidebar="openSidebar" />
+        <AppTopbar
+          :title="pageTitle"
+          :user-name="userName"
+          :photo-url="patientPhotoUrl"
+          @toggle-sidebar="openSidebar"
+        />
       </div>
 
       <main class="app-main" tabindex="-1">

@@ -1,4 +1,4 @@
-create table if not exists public.appointments (
+1create table if not exists public.appointments (
   id uuid primary key default gen_random_uuid(),
   patient_id uuid not null references auth.users (id) on delete cascade,
   service_id text references public.services (id) on delete set null,

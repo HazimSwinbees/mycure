@@ -4,17 +4,16 @@ const clinicInfoTable = 'clinic_info'
 
 const defaultClinicInfo = {
   id: 1,
-  clinicName: 'MyCure Central Clinic',
-  tagline: 'Modern primary care with clear digital access.',
-  email: 'hello@mycure.com',
-  phone: '+60 12 345 6789',
-  addressLine1: 'Lot 12, Jalan Clinic Sentral',
-  addressLine2: 'Kuching, Sarawak 93350',
-  operatingHours: 'Monday - Friday, 9:00 AM - 5:00 PM',
-  website: 'https://mycure.example',
-  description:
-    'MyCure supports daily consultations, follow-up care, preventive screening, and coordinated clinic operations from one connected platform.',
-  emergencyNote: 'For urgent emergencies, call local emergency services or go to the nearest hospital.',
+  clinicName: '',
+  tagline: '',
+  email: '',
+  phone: '',
+  addressLine1: '',
+  addressLine2: '',
+  operatingHours: '',
+  website: '',
+  description: '',
+  emergencyNote: '',
 }
 
 const mapClinicInfoRecord = (record) => ({

@@ -2,8 +2,18 @@ import { supabase } from '../lib/supabaseClient'
 
 const patientPhotosBucket = 'patient-photos'
 const patientProfilesTable = 'patient_profiles'
+const doctorProfilesTable = 'doctor_profiles'
 
 const sanitizeFileName = (name) => name.replace(/[^a-zA-Z0-9._-]/g, '_')
+const normalizeAuthError = (error) => {
+  const message = error?.message || ''
+
+  if (/user already registered/i.test(message)) {
+    return 'This email is already registered. Please sign in or use a different email address.'
+  }
+
+  return message || 'Authentication request failed.'
+}
 
 const uploadPatientPhoto = async (userId, photo) => {
   if (!photo) {
@@ -30,6 +40,34 @@ const uploadPatientPhoto = async (userId, photo) => {
   }
 }
 
+const uploadDoctorPhoto = async (userId, photo) => {
+  if (!photo) {
+    return ''
+  }
+
+  const photoPath = `${userId}/${Date.now()}-${sanitizeFileName(photo.name)}`
+
+  for (const bucketName of ['doctor-photos', patientPhotosBucket]) {
+    const { error: uploadError } = await supabase.storage
+      .from(bucketName)
+      .upload(photoPath, photo, {
+        contentType: photo.type,
+        upsert: true,
+      })
+
+    if (!uploadError) {
+      const { data } = supabase.storage.from(bucketName).getPublicUrl(photoPath)
+      return data.publicUrl || ''
+    }
+
+    if (!/bucket not found/i.test(uploadError.message || '')) {
+      throw new Error(uploadError.message)
+    }
+  }
+
+  throw new Error('Photo storage bucket was not found.')
+}
+
 const savePatientProfile = async (userId, form, photoPath, photoUrl) => {
   const { error } = await supabase.from(patientProfilesTable).upsert(
     {
@@ -53,7 +91,31 @@ const savePatientProfile = async (userId, form, photoPath, photoUrl) => {
   )
 
   if (error) {
-    throw new Error(error.message)
+    throw new Error(normalizeAuthError(error))
+  }
+}
+
+const saveDoctorProfile = async (userId, form) => {
+  const { error } = await supabase.from(doctorProfilesTable).upsert(
+    {
+      id: userId,
+      full_name: form.fullName,
+      role_title: form.roleTitle,
+      qualification: form.qualification,
+      experience: form.experience,
+      languages: form.languages,
+      specializations: form.specializations,
+      working_hours: form.workingHours,
+      about: form.about,
+      photo_url: form.photoUrl,
+    },
+    {
+      onConflict: 'id',
+    },
+  )
+
+  if (error) {
+    throw new Error(normalizeAuthError(error))
   }
 }
 
@@ -64,7 +126,7 @@ export const loginUser = async ({ email, password }) => {
   })
 
   if (error) {
-    throw new Error(error.message)
+    throw new Error(normalizeAuthError(error))
   }
 
   return data
@@ -121,8 +183,62 @@ export const registerUser = async ({
   return data
 }
 
+export const registerDoctor = async ({
+  fullName,
+  email,
+  password,
+  roleTitle,
+  qualification,
+  experience,
+  languages,
+  specializations,
+  workingHours,
+  about,
+  photo,
+}) => {
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        name: fullName,
+        role_title: roleTitle,
+        qualification,
+        experience,
+        photo_name: photo?.name || '',
+        photo_type: photo?.type || '',
+        photo_size: photo?.size || 0,
+        role: 'doctor',
+      },
+    },
+  })
+
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  const userId = data.user?.id
+  if (userId && data.session) {
+    const photoUrl = await uploadDoctorPhoto(userId, photo)
+    await saveDoctorProfile(userId, {
+      fullName,
+      roleTitle,
+      qualification,
+      experience,
+      languages,
+      specializations,
+      workingHours,
+      about,
+      photoUrl,
+    })
+  }
+
+  return data
+}
+
 export const requestPasswordReset = async (email) => {
-  const redirectTo = `${window.location.origin}/reset-password`
+  const appUrl = import.meta.env.VITE_APP_URL || 'https://mycure.vercel.app'
+  const redirectTo = `${appUrl.replace(/\/$/, '')}/reset-password`
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo,

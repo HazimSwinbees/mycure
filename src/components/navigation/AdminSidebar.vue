@@ -1,8 +1,9 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import logoUrl from '../../assets/mycure-logo.png'
 import { logoutUser } from '../../services/authApi'
+import { getCurrentDoctorProfile } from '../../services/doctorProfileApi'
 
 defineProps({
   open: {
@@ -13,17 +14,18 @@ defineProps({
 
 const emit = defineEmits(['close'])
 const router = useRouter()
+const doctorProfile = ref(null)
 
 const navigationItems = [
   { label: 'Dashboard', to: { name: 'admin-dashboard' }, icon: 'dashboard' },
   { label: 'Appointments', to: { name: 'admin-appointments' }, icon: 'appointments' },
+  { label: 'Visit Record', to: { name: 'admin-medical-records' }, icon: 'records' },
   { label: 'Patients', to: { name: 'admin-patients' }, icon: 'patients' },
   { label: 'Manage Services', to: { name: 'admin-services' }, icon: 'services' },
-  { label: 'Visit Records', to: { name: 'admin-medical-records' }, icon: 'records' },
   { label: 'Availability', to: { name: 'admin-availability' }, icon: 'availability' },
-  { label: 'Notifications', to: { name: 'admin-notifications' }, icon: 'notifications' },
   { label: 'Clinic Info', to: { name: 'admin-clinic-info' }, icon: 'clinic' },
   { label: 'Gemini Chat', to: { name: 'admin-gemini-chat' }, icon: 'chat' },
+  { label: 'Notifications', to: { name: 'admin-notifications' }, icon: 'notifications' },
 ]
 
 const iconPaths = {
@@ -58,6 +60,14 @@ const storedUser = computed(() => {
 })
 
 const currentDoctor = computed(() => {
+  if (doctorProfile.value) {
+    return {
+      name: doctorProfile.value.fullName || 'Doctor Account',
+      email: storedUser.value?.email || 'doctor@mycure.com',
+      photoUrl: doctorProfile.value.photoUrl || '',
+    }
+  }
+
   const user = storedUser.value
   const metadata = user?.user_metadata || {}
   const fullName =
@@ -66,6 +76,7 @@ const currentDoctor = computed(() => {
   return {
     name: fullName,
     email: user?.email || 'doctor@mycure.com',
+    photoUrl: '',
   }
 })
 
@@ -88,6 +99,14 @@ const handleLogout = async () => {
   emit('close')
   router.push({ name: 'login' })
 }
+
+onMounted(async () => {
+  try {
+    doctorProfile.value = await getCurrentDoctorProfile()
+  } catch {
+    doctorProfile.value = null
+  }
+})
 </script>
 
 <template>
@@ -139,7 +158,10 @@ const handleLogout = async () => {
 
         <div class="sidebar-footer">
           <RouterLink class="profile-card profile-link" :to="{ name: 'admin-doctor-profile' }" @click="emit('close')">
-            <span class="profile-avatar" aria-hidden="true">{{ initials }}</span>
+            <span class="profile-avatar" aria-hidden="true">
+              <img v-if="currentDoctor.photoUrl" :src="currentDoctor.photoUrl" alt="" />
+              <span v-else>{{ initials }}</span>
+            </span>
             <div class="profile-copy">
               <strong>{{ currentDoctor.name }}</strong>
               <span>{{ currentDoctor.email }}</span>
@@ -240,10 +262,13 @@ const handleLogout = async () => {
   gap: 0.9rem;
   min-height: 2.75rem;
   border-radius: 10px;
+  border: 1px solid transparent;
   color: #6b7280;
   padding: 0.5rem 0.25rem;
   transition:
     background 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
     transform 160ms ease,
     color 160ms ease;
 }
@@ -255,7 +280,15 @@ const handleLogout = async () => {
 }
 
 .nav-link.router-link-active {
-  color: #111827;
+  border-color: #dbe7fb;
+  background: linear-gradient(180deg, #f7faff 0%, #eef4ff 100%);
+  box-shadow: 0 10px 24px rgba(49, 87, 183, 0.08);
+  color: #3157b7;
+}
+
+.nav-link.router-link-active .nav-label {
+  color: #163c8c;
+  font-weight: 600;
 }
 
 .nav-icon {
@@ -310,12 +343,19 @@ const handleLogout = async () => {
   width: 2.4rem;
   height: 2.4rem;
   place-items: center;
+  overflow: hidden;
   border: 1px solid #e5e7eb;
   border-radius: 50%;
   background: #f3f4f6;
   color: #374151;
   font-size: 0.9rem;
   font-weight: 600;
+}
+
+.profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .profile-copy {

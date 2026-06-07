@@ -3,6 +3,8 @@ import { getPatientProfilesByIds } from './patientApi'
 import { createDoctorNotification, createPatientNotification } from './notificationApi'
 
 const appointmentsTable = 'appointments'
+const AUTO_CANCELLATION_REASON =
+  'Automatically cancelled because the appointment date passed before confirmation.'
 
 const notifySafely = async (callback) => {
   try {
@@ -34,12 +36,12 @@ const mapAppointmentRecord = (record) => ({
   id: String(record.id),
   patientId: record.patient_id,
   service: record.service_name,
-  doctor: record.doctor_name || 'Care team',
+  doctor: record.doctor_name || '-',
   date: formatDisplayDate(record.appointment_date),
   rawDate: record.appointment_date,
   time: record.appointment_time,
   status: record.status,
-  location: record.location || 'Main clinic',
+  location: record.location || '-',
   notes: record.reason || '',
   statusReason: record.status_reason || '',
   duration: record.duration || 'Not specified',
@@ -101,6 +103,31 @@ const getCurrentUserId = async () => {
   return userId
 }
 
+const getTodayDateKey = () => {
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = String(today.getMonth() + 1).padStart(2, '0')
+  const day = String(today.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+const autoCancelPastPendingAppointmentsForPatient = async (patientId) => {
+  const { error } = await supabase
+    .from(appointmentsTable)
+    .update({
+      status: 'Cancelled',
+      status_reason: AUTO_CANCELLATION_REASON,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('patient_id', patientId)
+    .eq('status', 'Pending')
+    .lt('appointment_date', getTodayDateKey())
+
+  if (error) {
+    throw new Error(error.message)
+  }
+}
+
 export const createAppointment = async (draft) => {
   const patientId = await getCurrentUserId()
 
@@ -109,7 +136,7 @@ export const createAppointment = async (draft) => {
     service_id: draft.serviceId,
     service_name: draft.serviceName,
     service_category: draft.serviceCategory,
-    doctor_name: draft.doctorName || 'Care team',
+    doctor_name: draft.doctorName || '-',
     appointment_date: draft.date,
     appointment_time: draft.time,
     duration: draft.serviceDuration,
@@ -155,6 +182,7 @@ export const createAppointment = async (draft) => {
 
 export const getCurrentPatientAppointments = async () => {
   const patientId = await getCurrentUserId()
+  await autoCancelPastPendingAppointmentsForPatient(patientId)
 
   const { data, error } = await supabase
     .from(appointmentsTable)
@@ -172,6 +200,7 @@ export const getCurrentPatientAppointments = async () => {
 
 export const getCurrentPatientAppointmentById = async (id) => {
   const patientId = await getCurrentUserId()
+  await autoCancelPastPendingAppointmentsForPatient(patientId)
 
   const { data, error } = await supabase
     .from(appointmentsTable)

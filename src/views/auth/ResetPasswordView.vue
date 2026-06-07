@@ -1,11 +1,12 @@
 <script setup>
 import { onBeforeUnmount, onMounted, reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import logoUrl from '../../assets/mycure-logo.png'
 import { supabase } from '../../lib/supabaseClient'
 import { logoutUser, updatePassword } from '../../services/authApi'
 
 const router = useRouter()
+const route = useRoute()
 
 const form = reactive({
   password: '',
@@ -16,12 +17,58 @@ const errorMessage = ref('')
 const successMessage = ref('')
 const isSubmitting = ref(false)
 const isRecoveryReady = ref(false)
+const isInitializingRecovery = ref(true)
 
 let authSubscription
 
-const markRecoveryReady = () => {
-  const hasRecoveryHash = window.location.hash.includes('type=recovery')
-  isRecoveryReady.value = hasRecoveryHash
+const getHashParams = () => {
+  const hash = window.location.hash.startsWith('#') ? window.location.hash.slice(1) : window.location.hash
+  return new URLSearchParams(hash)
+}
+
+const initializeRecoverySession = async () => {
+  errorMessage.value = ''
+
+  const code = typeof route.query.code === 'string' ? route.query.code : ''
+  const hashParams = getHashParams()
+  const accessToken = hashParams.get('access_token') || ''
+  const refreshToken = hashParams.get('refresh_token') || ''
+  const hashType = hashParams.get('type') || ''
+
+  try {
+    if (code) {
+      const { error } = await supabase.auth.exchangeCodeForSession(code)
+
+      if (error) {
+        throw error
+      }
+
+      isRecoveryReady.value = true
+      return
+    }
+
+    if (hashType === 'recovery' && accessToken && refreshToken) {
+      const { error } = await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      })
+
+      if (error) {
+        throw error
+      }
+
+      isRecoveryReady.value = true
+      return
+    }
+
+    const { data } = await supabase.auth.getSession()
+    isRecoveryReady.value = Boolean(data.session)
+  } catch (error) {
+    errorMessage.value = error.message || 'This reset link is invalid or has expired. Request a new one.'
+    isRecoveryReady.value = false
+  } finally {
+    isInitializingRecovery.value = false
+  }
 }
 
 const handleSubmit = async () => {
@@ -67,22 +114,18 @@ const handleSubmit = async () => {
 }
 
 onMounted(async () => {
-  markRecoveryReady()
-
   const {
     data: { subscription },
   } = supabase.auth.onAuthStateChange((event) => {
     if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
       isRecoveryReady.value = true
+      isInitializingRecovery.value = false
     }
   })
 
   authSubscription = subscription
 
-  const { data } = await supabase.auth.getSession()
-  if (data.session) {
-    isRecoveryReady.value = true
-  }
+  await initializeRecoverySession()
 })
 
 onBeforeUnmount(() => {
@@ -112,7 +155,15 @@ onBeforeUnmount(() => {
         </div>
       </transition>
 
-      <div v-if="!isRecoveryReady && !successMessage" class="alert alert-warning" role="status">
+      <div v-if="isInitializingRecovery && !successMessage" class="alert alert-warning" role="status">
+        Validating your reset link.
+      </div>
+
+      <div
+        v-else-if="!isRecoveryReady && !successMessage"
+        class="alert alert-warning"
+        role="status"
+      >
         Open this page from the password reset email link to set a new password.
       </div>
 
@@ -141,7 +192,11 @@ onBeforeUnmount(() => {
           />
         </label>
 
-        <button type="submit" class="primary-action" :disabled="isSubmitting || !isRecoveryReady">
+        <button
+          type="submit"
+          class="primary-action"
+          :disabled="isSubmitting || !isRecoveryReady || isInitializingRecovery"
+        >
           {{ isSubmitting ? 'Saving...' : 'Save New Password' }}
         </button>
       </form>

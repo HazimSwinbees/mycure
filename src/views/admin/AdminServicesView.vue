@@ -195,9 +195,12 @@ onMounted(loadServices)
             </span>
           </div>
 
-          <button class="ghost-button" type="button" @click="toggleAvailability(service)">
-            {{ service.available ? 'Disable booking' : 'Enable booking' }}
-          </button>
+          <div class="service-head-actions">
+            <button class="ghost-button" type="button" @click="toggleAvailability(service)">
+              {{ service.available ? 'Disable booking' : 'Enable booking' }}
+            </button>
+            <button class="danger-button" type="button" @click="removeService(service)">Delete</button>
+          </div>
         </div>
 
         <div class="service-main">
@@ -223,7 +226,6 @@ onMounted(loadServices)
           >
             View details
           </RouterLink>
-          <button class="danger-button" type="button" @click="removeService(service)">Delete</button>
         </div>
       </article>
     </section>
@@ -461,6 +463,13 @@ onMounted(loadServices)
   gap: 0.75rem;
 }
 
+.service-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
 .service-meta {
   display: flex;
   align-items: center;
@@ -677,6 +686,7 @@ onMounted(loadServices)
   .hero-panel,
   .hero-actions,
   .service-head,
+  .service-head-actions,
   .service-actions {
     flex-direction: column;
     align-items: stretch;

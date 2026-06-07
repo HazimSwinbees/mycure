@@ -297,6 +297,27 @@ export const getCurrentPatientMedicalRecordById = async (id) => {
   }
 }
 
+export const getCurrentPatientMedicalRecordByAppointmentId = async (appointmentId) => {
+  if (!appointmentId) {
+    return null
+  }
+
+  const patientId = await getCurrentUserId()
+
+  const { data, error } = await supabase
+    .from(medicalRecordsTable)
+    .select('id')
+    .eq('appointment_id', appointmentId)
+    .eq('patient_id', patientId)
+    .maybeSingle()
+
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  return data ? String(data.id) : null
+}
+
 export const getDoctorMedicalRecords = async () => {
   const { data: records, error } = await supabase
     .from(medicalRecordsTable)

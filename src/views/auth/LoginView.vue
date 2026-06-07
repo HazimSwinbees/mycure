@@ -1,14 +1,20 @@
 <script setup>
-import { reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, reactive, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import logoUrl from '../../assets/mycure-logo.png'
 import { loginUser } from '../../services/authApi'
 
 const router = useRouter()
+const route = useRoute()
 const errorMessage = ref('')
 const isSubmitting = ref(false)
 const showPassword = ref(false)
 const rememberMe = ref(false)
+const redirectTarget = computed(() =>
+  typeof route.query.redirect === 'string' && route.query.redirect.startsWith('/')
+    ? route.query.redirect
+    : '',
+)
 
 const form = reactive({
   email: '',
@@ -33,6 +39,12 @@ const handleLogin = async () => {
     localStorage.setItem('mycure_refresh_token', session.refresh_token)
     localStorage.setItem('mycure_role', role)
     localStorage.setItem('mycure_user', JSON.stringify(user))
+
+    if (redirectTarget.value) {
+      router.push(redirectTarget.value)
+      return
+    }
+
     router.push(role === 'doctor' ? '/admin/dashboard' : '/app/dashboard')
   } catch (error) {
     errorMessage.value = error.message || 'Login failed. Please check your credentials and try again.'

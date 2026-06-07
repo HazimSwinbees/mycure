@@ -1,23 +1,40 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { getCurrentPatientMedicalRecords } from '../../services/medicalRecordApi'
 
 const visits = ref([])
 const isLoading = ref(true)
 const loadError = ref('')
+const filters = reactive({
+  search: '',
+})
 
-const summaryItems = computed(() => [
-  { label: 'Total visits', value: visits.value.length },
-  {
-    label: 'With prescription',
-    value: visits.value.filter((item) => item.prescriptions.length > 0).length,
-  },
-  {
-    label: 'Follow-up planned',
-    value: visits.value.filter((item) => item.followUp && item.followUp !== '-').length,
-  },
-])
+const filteredVisits = computed(() => {
+  const keyword = filters.search.trim().toLowerCase()
+
+  if (!keyword) {
+    return visits.value
+  }
+
+  return visits.value.filter((visit) => {
+    const searchableFields = [
+      visit.serviceName,
+      visit.visitDate,
+      visit.diagnosis,
+      visit.chiefComplaint,
+      visit.clinicalNote,
+      visit.followUp,
+    ]
+
+    return searchableFields.some((value) => String(value || '').toLowerCase().includes(keyword))
+  })
+})
+
+const resultLabel = computed(() => {
+  const count = filteredVisits.value.length
+  return `${count} visit${count === 1 ? '' : 's'}`
+})
 
 const loadVisits = async () => {
   isLoading.value = true
@@ -42,17 +59,26 @@ onMounted(loadVisits)
         <p class="section-label">Medical visits</p>
         <h1>Review your visit history</h1>
         <p class="muted-copy">
-          See completed clinic visits, diagnosis notes, follow-up plans, and any medication issued
-          during the consultation.
+          See completed clinic visits, diagnosis notes, follow-up plans, and consultation records
+          in one searchable list.
         </p>
       </div>
     </section>
 
-    <section class="summary-grid" aria-label="Visit overview">
-      <article v-for="item in summaryItems" :key="item.label" class="summary-card">
-        <span>{{ item.label }}</span>
-        <strong>{{ item.value }}</strong>
-      </article>
+    <section class="filters-panel">
+      <div class="toolbar-copy">
+        <p class="section-label">Find a visit</p>
+        <p class="toolbar-note">Search by service, diagnosis, complaint, notes, follow-up, or date.</p>
+      </div>
+      <label class="search-field">
+        <span class="search-icon" aria-hidden="true">⌕</span>
+        <input
+          v-model.trim="filters.search"
+          type="search"
+          placeholder="Search medical visits"
+          aria-label="Search medical visits"
+        />
+      </label>
     </section>
 
     <section v-if="isLoading" class="state-panel">
@@ -73,75 +99,102 @@ onMounted(loadVisits)
       <p class="muted-copy">Your completed clinic visits will appear here after consultation.</p>
     </section>
 
-    <section v-else class="visits-grid" aria-label="Medical visit list">
-      <article v-for="visit in visits" :key="visit.id" class="visit-card">
-        <div class="card-top">
-          <span class="visit-date">Visit {{ visit.visitDate }}</span>
-          <span class="time-chip">{{ visit.appointmentTime }}</span>
+    <section v-else-if="!filteredVisits.length" class="state-panel">
+      <p class="section-label">Medical visits</p>
+      <h2>No matching visit found</h2>
+      <p class="muted-copy">Try changing your search term to find a visit.</p>
+    </section>
+
+    <section v-else class="list-shell" aria-label="Medical visit list">
+      <div class="list-intro">
+        <div>
+          <p class="section-label">Visit list</p>
+          <h2>Your medical visits</h2>
         </div>
-
-        <div class="card-main">
-          <div class="title-block">
-            <h2>{{ visit.serviceName }}</h2>
-            <span class="count-pill">
-              {{ visit.prescriptions.length }} prescription{{ visit.prescriptions.length === 1 ? '' : 's' }}
-            </span>
+        <p class="list-count">{{ resultLabel }}</p>
+      </div>
+      <div class="list-body">
+        <article v-for="visit in filteredVisits" :key="visit.id" class="list-row">
+          <div class="visit-main">
+            <div class="visit-date">
+              <strong>{{ visit.visitDate }}</strong>
+              <small>{{ visit.appointmentTime }}</small>
+            </div>
+            <div class="visit-summary">
+              <div class="summary-topline">
+                <strong>{{ visit.serviceName }}</strong>
+                <span class="detail-chip">
+                  {{
+                    visit.prescriptions.length
+                      ? `${visit.prescriptions.length} prescription${visit.prescriptions.length === 1 ? '' : 's'}`
+                      : 'No prescription'
+                  }}
+                </span>
+              </div>
+              <p>{{ visit.chiefComplaint }}</p>
+            </div>
           </div>
-
-          <div class="details-grid">
-            <article class="detail-item">
+          <div class="visit-clinical">
+            <div class="info-block">
               <span>Diagnosis</span>
               <strong>{{ visit.diagnosis }}</strong>
-            </article>
-            <article class="detail-item">
-              <span>Chief complaint</span>
-              <strong>{{ visit.chiefComplaint }}</strong>
-            </article>
-            <article class="detail-item detail-wide">
+            </div>
+            <div class="info-block">
               <span>Clinical note</span>
-              <strong>{{ visit.clinicalNote }}</strong>
-            </article>
-            <article class="detail-item detail-wide">
-              <span>Follow-up</span>
-              <strong>{{ visit.followUp }}</strong>
-            </article>
+              <p>{{ visit.clinicalNote }}</p>
+            </div>
           </div>
-        </div>
-
-        <div class="card-bottom">
-          <span class="prescription-copy">
-            {{ visit.prescriptions.length ? 'Medication issued during this visit.' : 'No medication issued for this visit.' }}
-          </span>
-          <RouterLink class="details-button" :to="{ name: 'medical-visit-details', params: { id: visit.id } }">
-            View details
-          </RouterLink>
-        </div>
-      </article>
+          <div class="visit-follow-up">
+            <span>Follow-up</span>
+            <strong>{{ visit.followUp || 'No follow-up planned' }}</strong>
+          </div>
+          <div class="list-action">
+            <RouterLink
+              class="details-button"
+              :to="{ name: 'medical-visit-details', params: { id: visit.id } }"
+            >
+              View details
+            </RouterLink>
+          </div>
+        </article>
+      </div>
     </section>
   </section>
 </template>
 
 <style scoped>
 .visits-page,
-.visits-grid,
-.visit-card,
-.card-main {
+.list-shell,
+.visit-main,
+.visit-summary,
+.visit-clinical,
+.info-block {
   display: grid;
   gap: 1rem;
 }
 
 .hero-panel,
-.summary-card,
+.filters-panel,
 .state-panel,
-.visit-card {
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+.list-shell {
+  border: 1px solid #e3ebf5;
+  border-radius: 20px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  padding: 1.35rem;
 }
 
 .hero-panel,
-.state-panel,
-.visit-card {
+.filters-panel,
+.list-intro,
+.summary-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.hero-panel {
+  border-radius: 14px;
   padding: 1.25rem;
 }
 
@@ -151,145 +204,254 @@ onMounted(loadVisits)
 }
 
 .section-label {
-  color: #7a7f87;
+  color: #6f7d90;
   font-size: 0.75rem;
   font-weight: 600;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .hero-copy h1,
-.title-block h2 {
-  color: #111827;
+.state-panel h2,
+.list-intro h2 {
+  color: #14213d;
   font-weight: 700;
+  margin: 0;
 }
 
 .hero-copy h1 {
   font-size: clamp(1.75rem, 4vw, 2.35rem);
   line-height: 1.05;
+  margin: 0;
 }
 
 .muted-copy,
-.detail-item span,
-.summary-card span,
-.prescription-copy,
-.visit-date {
-  color: #6b7280;
+.toolbar-note,
+.visit-date small,
+.visit-summary p,
+.info-block span,
+.info-block p,
+.list-count {
+  color: #607086;
 }
 
-.summary-grid {
+.muted-copy,
+.toolbar-note,
+.visit-summary p,
+.info-block p {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.list-count,
+.detail-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.filters-panel {
+  padding: 1rem 1.1rem;
+}
+
+.toolbar-copy {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.search-field {
+  position: relative;
+  flex: 1;
+  min-width: min(100%, 22rem);
+}
+
+.search-icon {
+  position: absolute;
+  top: 50%;
+  left: 0.95rem;
+  transform: translateY(-50%);
+  color: #8ca0bd;
+  font-size: 1rem;
+}
+
+.search-field input {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid #d7e3f2;
+  border-radius: 14px;
+  background: #ffffff;
+  color: #111827;
+  font: inherit;
+  padding: 0.82rem 0.95rem 0.82rem 2.6rem;
+}
+
+.search-field input:focus {
+  outline: none;
+  border-color: #9bb7f1;
+  box-shadow: 0 0 0 4px rgba(49, 87, 183, 0.1);
+}
+
+.list-shell,
+.list-body {
+  gap: 0.9rem;
+}
+
+.list-intro {
+  border-bottom: 1px solid #ebf0f6;
+  padding-bottom: 0.2rem;
+}
+
+.list-count {
+  border: 1px solid #e2eaf6;
+  background: #f8fbff;
+  color: #46618d;
+  min-height: 38px;
+  padding: 0.45rem 0.85rem;
+}
+
+.list-body {
   display: grid;
   gap: 1rem;
 }
 
-.summary-card {
+.list-row {
   display: grid;
-  gap: 0.35rem;
-  padding: 1rem 1.1rem;
-}
-
-.summary-card strong {
-  color: #111827;
-  font-size: 1.55rem;
-  font-weight: 700;
-}
-
-.visit-card {
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.15fr) minmax(12rem, 0.8fr) auto;
+  gap: 1rem;
+  align-items: start;
+  border: 1px solid #e2eaf4;
+  border-radius: 18px;
+  background: #ffffff;
+  padding: 1.1rem;
   transition:
     border-color 180ms ease,
     box-shadow 180ms ease,
     transform 180ms ease;
 }
 
-.visit-card:hover {
-  border-color: #cbd5e1;
-  box-shadow: 0 18px 34px rgba(59, 130, 246, 0.08);
+.list-row:hover {
+  border-color: #c4d5ee;
+  box-shadow: 0 18px 36px rgba(49, 87, 183, 0.08);
   transform: translateY(-2px);
 }
 
-.card-top,
-.card-bottom,
-.title-block {
+.visit-main {
+  grid-template-columns: minmax(8.25rem, 0.72fr) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.visit-date {
+  display: grid;
+  gap: 0.18rem;
+  padding-right: 1rem;
+  border-right: 1px solid #edf2f8;
+}
+
+.visit-date strong,
+.visit-summary strong,
+.visit-follow-up strong,
+.info-block strong {
+  color: #14213d;
+  font-weight: 600;
+}
+
+.visit-summary {
+  gap: 0.45rem;
+}
+
+.detail-chip {
+  border: 1px solid #dce8fb;
+  background: #f4f8ff;
+  color: #3157b7;
+  min-height: 32px;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.8rem;
+}
+
+.visit-clinical {
+  gap: 0.8rem;
+}
+
+.info-block {
+  gap: 0.25rem;
+}
+
+.info-block span,
+.visit-follow-up span {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.visit-follow-up {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.05rem 0 0 1rem;
+  border-left: 1px solid #edf2f8;
+}
+
+.list-action {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
-
-.time-chip,
-.count-pill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 30px;
-  border-radius: 999px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  padding: 0.38rem 0.72rem;
-}
-
-.time-chip {
-  background: #eef2ff;
-  color: #4a56c9;
-}
-
-.count-pill {
-  background: #f5f8ff;
-  color: #3157b7;
-}
-
-.details-grid {
-  display: grid;
-  gap: 0.85rem;
-}
-
-.detail-item {
-  display: grid;
-  gap: 0.28rem;
-  border-top: 1px solid #eef2f7;
-  padding-top: 0.85rem;
-}
-
-.detail-item strong {
-  color: #111827;
-  font-weight: 600;
-}
-
-.card-bottom {
-  border-top: 1px solid #e8eef9;
-  padding-top: 1rem;
+  justify-content: flex-end;
+  height: 100%;
 }
 
 .details-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 40px;
+  min-height: 42px;
   border: 1px solid #d7e3fb;
-  border-radius: 10px;
-  background: #f5f8ff;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #f8fbff 0%, #eef4ff 100%);
   color: #3157b7;
   font-size: 0.9rem;
   font-weight: 600;
-  padding: 0.65rem 1rem;
+  padding: 0.7rem 1rem;
+  box-shadow: 0 10px 22px rgba(49, 87, 183, 0.08);
 }
 
-@media (min-width: 760px) {
-  .summary-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+@media (max-width: 1100px) {
+  .list-row {
+    grid-template-columns: 1fr;
   }
 
-  .details-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .visit-main {
+    grid-template-columns: 1fr;
   }
 
-  .detail-wide {
-    grid-column: 1 / -1;
+  .visit-date,
+  .visit-follow-up {
+    border: 0;
+    padding: 0;
+  }
+
+  .list-action {
+    justify-content: flex-start;
   }
 }
 
-@media (min-width: 1100px) {
-  .visits-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+@media (max-width: 760px) {
+  .hero-panel,
+  .filters-panel,
+  .list-intro,
+  .summary-topline {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .search-field {
+    width: 100%;
+  }
+
+  .hero-badge,
+  .list-count {
+    min-height: 36px;
   }
 }
 </style>

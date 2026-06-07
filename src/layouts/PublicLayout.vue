@@ -8,7 +8,7 @@ const route = useRoute()
 <template>
   <div class="public-layout">
     <header
-      v-if="!['login', 'register'].includes(route.name)"
+      v-if="!['login', 'register', 'register-doctor'].includes(route.name)"
       class="public-header"
       :class="{ 'is-landing': route.name === 'landing' }"
       aria-label="Public navigation"
@@ -24,16 +24,9 @@ const route = useRoute()
       </RouterLink>
 
       <nav class="public-nav">
-        <RouterLink :to="{ name: 'landing' }">Home</RouterLink>
-        <RouterLink :to="{ name: 'landing', hash: '#about' }">About</RouterLink>
-        <RouterLink :to="{ name: 'landing', hash: '#services' }">Services</RouterLink>
-        <RouterLink :to="{ name: 'landing', hash: '#faq' }">FAQ</RouterLink>
-        <RouterLink :to="{ name: 'landing', hash: '#blogs' }">Blogs</RouterLink>
         <RouterLink class="login-link" :to="{ name: 'login' }">Login</RouterLink>
-        <RouterLink class="appointment-link" :to="{ name: 'login' }">
-          Book appointment
-          <span aria-hidden="true">›</span>
-        </RouterLink>
+        <RouterLink class="register-link" :to="{ name: 'register' }">Register</RouterLink>
+        <RouterLink class="appointment-link" :to="{ name: 'booking' }">Book appointment</RouterLink>
       </nav>
     </header>
 
@@ -120,6 +113,7 @@ const route = useRoute()
 }
 
 .public-nav a:not(.appointment-link) {
+  border: 1px solid transparent;
   border-radius: 999px;
   color: rgba(255, 255, 255, 0.86);
   font-size: 0.84rem;
@@ -127,6 +121,7 @@ const route = useRoute()
   padding: 0.68rem 0.85rem;
   transition:
     background 160ms ease,
+    border-color 160ms ease,
     color 160ms ease;
 }
 
@@ -136,7 +131,8 @@ const route = useRoute()
   color: #ffffff;
 }
 
-.login-link {
+.login-link,
+.register-link {
   margin-left: 0.35rem;
 }
 
@@ -145,39 +141,31 @@ const route = useRoute()
   min-height: 42px;
   align-items: center;
   justify-content: center;
-  gap: 0.55rem;
+  border: 1px solid transparent;
   background: #ffffff;
   color: #123b7a;
   border-radius: 999px;
   margin-left: 0.55rem;
-  padding: 0.62rem 0.75rem 0.62rem 1rem;
+  padding: 0.62rem 1rem;
   font-size: 0.84rem;
   font-weight: 950;
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.14);
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease;
 }
 
-.appointment-link span {
-  display: grid;
-  width: 24px;
-  height: 24px;
-  place-items: center;
-  border-radius: 50%;
-  background: #123b7a;
-  color: #ffffff;
-  font-size: 1.2rem;
-  line-height: 1;
+.appointment-link.router-link-active {
+  border-color: rgba(255, 255, 255, 0.42);
+  background: #dce9ff;
+  color: #0f2f66;
+  box-shadow: 0 12px 26px rgba(6, 26, 63, 0.2);
 }
 
 .public-main {
   min-height: 100vh;
-}
-
-@media (max-width: 900px) {
-  .public-nav a:nth-child(4),
-  .public-nav a:nth-child(5),
-  .login-link {
-    display: none;
-  }
 }
 
 @media (max-width: 640px) {
@@ -193,6 +181,7 @@ const route = useRoute()
 
   .public-nav {
     gap: 0.2rem;
+    flex-wrap: wrap;
   }
 
   .public-nav a:not(.appointment-link) {
@@ -201,19 +190,13 @@ const route = useRoute()
 
   .appointment-link {
     min-height: 38px;
-    padding: 0.55rem 0.6rem 0.55rem 0.75rem;
-  }
-
-  .appointment-link span {
-    width: 22px;
-    height: 22px;
+    padding: 0.55rem 0.75rem;
   }
 }
 
 @media (max-width: 460px) {
-  .public-nav a:nth-child(2),
-  .public-nav a:nth-child(3) {
-    display: none;
+  .public-nav {
+    justify-content: flex-end;
   }
 }
 </style>

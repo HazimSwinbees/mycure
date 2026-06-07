@@ -15,6 +15,7 @@ const saveError = ref('')
 const closureError = ref('')
 const isSavingSchedule = ref(false)
 const isSavingClosure = ref(false)
+const activeWeekday = ref('')
 
 const closureForm = reactive({
   closureDate: '',
@@ -28,6 +29,7 @@ const dayRangeForms = reactive({})
 const hasSchedule = computed(() => weeklySchedule.value.length > 0)
 const hasClosures = computed(() => closures.value.length > 0)
 const isPartialClosure = computed(() => closureForm.mode === 'time-range')
+const activeDay = computed(() => weeklySchedule.value.find((day) => day.weekday === activeWeekday.value) || null)
 
 const ensureDayForm = (weekday) => {
   if (!dayRangeForms[weekday]) {
@@ -76,6 +78,7 @@ const loadAvailability = async () => {
       ...day,
       availableSlots: [...(day.availableSlots || [])],
     }))
+    activeWeekday.value = weeklySchedule.value[0]?.weekday || ''
     closures.value = settings.closures
     syncDayForms()
   } catch (error) {
@@ -225,6 +228,23 @@ onMounted(loadAvailability)
     </section>
 
     <template v-else>
+      <section v-if="hasSchedule" class="tabs-panel" aria-label="Availability days">
+        <div class="tabs-row" role="tablist" aria-label="Availability days">
+          <button
+            v-for="day in weeklySchedule"
+            :key="day.weekday"
+            class="tab-button"
+            :class="{ 'is-active': activeWeekday === day.weekday }"
+            type="button"
+            role="tab"
+            :aria-selected="activeWeekday === day.weekday"
+            @click="activeWeekday = day.weekday"
+          >
+            <span>{{ day.dayName }}</span>
+          </button>
+        </div>
+      </section>
+
       <section class="panel">
         <div class="panel-head">
           <div>
@@ -234,53 +254,89 @@ onMounted(loadAvailability)
         </div>
 
         <div v-if="hasSchedule" class="day-stack">
-          <article v-for="day in weeklySchedule" :key="day.weekday" class="day-card">
+          <article v-if="activeDay" class="day-card">
             <div class="day-head">
               <div class="day-copy">
-                <strong>{{ day.dayName }}</strong>
-                <small>{{ day.isOpen ? `${day.availableSlots.length} slots` : 'Unavailable' }}</small>
+                <p class="day-kicker">Selected day</p>
+                <strong>{{ activeDay.dayName }}</strong>
+                <small>
+                  {{
+                    activeDay.isOpen
+                      ? `${activeDay.availableSlots.length} slot${activeDay.availableSlots.length === 1 ? '' : 's'} ready`
+                      : 'Currently unavailable for booking'
+                  }}
+                </small>
               </div>
 
               <label class="toggle-row">
-                <input v-model="day.isOpen" type="checkbox" />
-                <span>{{ day.isOpen ? 'Available' : 'Unavailable' }}</span>
+                <input v-model="activeDay.isOpen" type="checkbox" />
+                <span>{{ activeDay.isOpen ? 'Available' : 'Unavailable' }}</span>
               </label>
             </div>
 
-            <div v-if="day.isOpen && day.availableSlots.length" class="slot-grid">
+            <div v-if="activeDay.isOpen && activeDay.availableSlots.length" class="slot-section">
+              <div class="slot-section-head">
+                <p class="section-label">Active slots</p>
+                <p class="slot-helper">Select a slot to remove it.</p>
+              </div>
+
+              <div class="slot-grid">
               <button
-                v-for="slot in day.availableSlots"
+                v-for="slot in activeDay.availableSlots"
                 :key="slot"
                 class="slot-chip"
                 type="button"
-                @click="removeSlot(day, slot)"
+                @click="removeSlot(activeDay, slot)"
               >
                 <span>{{ slot }}</span>
                 <span class="chip-close">x</span>
               </button>
+              </div>
             </div>
 
             <p v-else class="empty-copy">
-              {{ day.isOpen ? 'No slots added for this day.' : 'This day is currently unavailable for booking.' }}
+              {{
+                activeDay.isOpen ? 'No slots added for this day.' : 'This day is currently unavailable for booking.'
+              }}
             </p>
 
-            <div class="range-row" :class="{ 'is-disabled': !day.isOpen }">
-              <label class="field compact-field">
-                <span>From</span>
-                <input v-model="ensureDayForm(day.weekday).startTime" type="time" :disabled="!day.isOpen" />
-              </label>
+            <div class="day-tools" :class="{ 'is-disabled': !activeDay.isOpen }">
+              <div class="slot-section-head">
+                <p class="section-label">Add time range</p>
+                <p class="slot-helper">New slots will be merged into the current day.</p>
+              </div>
 
-              <label class="field compact-field">
-                <span>To</span>
-                <input v-model="ensureDayForm(day.weekday).endTime" type="time" :disabled="!day.isOpen" />
-              </label>
-            </div>
+              <div class="range-row">
+                <label class="field compact-field">
+                  <span>From</span>
+                  <input
+                    v-model="ensureDayForm(activeDay.weekday).startTime"
+                    type="time"
+                    :disabled="!activeDay.isOpen"
+                  />
+                </label>
 
-            <div class="day-actions">
-              <button class="add-range-button" type="button" :disabled="!day.isOpen" @click="addTimeRange(day)">
-                Add time range
-              </button>
-              <button class="clear-button" type="button" @click="clearDay(day)">Clear day</button>
+                <label class="field compact-field">
+                  <span>To</span>
+                  <input
+                    v-model="ensureDayForm(activeDay.weekday).endTime"
+                    type="time"
+                    :disabled="!activeDay.isOpen"
+                  />
+                </label>
+              </div>
+
+              <div class="day-actions">
+                <button
+                  class="add-range-button"
+                  type="button"
+                  :disabled="!activeDay.isOpen"
+                  @click="addTimeRange(activeDay)"
+                >
+                  Add time range
+                </button>
+                <button class="clear-button" type="button" @click="clearDay(activeDay)">Clear day</button>
+              </div>
             </div>
           </article>
         </div>
@@ -329,7 +385,7 @@ onMounted(loadAvailability)
 
         <p v-if="closureError" class="error-copy" role="alert">{{ closureError }}</p>
 
-        <div class="action-row action-row-right action-row-spaced">
+        <div class="action-row action-row-right action-row-spaced closure-action-row">
           <button class="secondary-action" type="button" :disabled="isSavingClosure" @click="addClosure">
             {{ isSavingClosure ? 'Saving date...' : 'Add closed date' }}
           </button>
@@ -363,28 +419,32 @@ onMounted(loadAvailability)
 .doctor-page,
 .day-stack,
 .closure-list,
-.closure-form {
+.closure-form,
+.slot-section,
+.day-tools {
   display: grid;
   gap: 1rem;
 }
 
 .hero-panel,
+.tabs-panel,
 .panel,
 .day-card,
 .closure-card {
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  background: #fff;
+  border: 1px solid #e3ebf5;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
 }
 
 .hero-panel,
+.tabs-panel,
 .panel {
-  padding: 1.25rem;
+  padding: 1.35rem;
 }
 
 .day-card,
 .closure-card {
-  padding: 1rem;
+  padding: 1rem 1.05rem;
 }
 
 .hero-copy,
@@ -396,17 +456,19 @@ onMounted(loadAvailability)
 }
 
 .section-label {
-  color: #7a7f87;
+  color: #6f7d90;
   font-size: 0.75rem;
   font-weight: 600;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .hero-copy h1,
 .panel-head h2,
 .day-copy strong,
-.closure-copy strong {
-  color: #111827;
+.closure-copy strong,
+.overview-card strong {
+  color: #14213d;
   font-weight: 700;
 }
 
@@ -419,8 +481,11 @@ onMounted(loadAvailability)
 .day-copy small,
 .closure-copy p,
 .field span,
-.empty-copy {
-  color: #6b7280;
+.empty-copy,
+.overview-card span,
+.slot-helper,
+.day-kicker {
+  color: #607086;
 }
 
 .panel-head,
@@ -439,13 +504,61 @@ onMounted(loadAvailability)
   align-items: start;
 }
 
+.tabs-row {
+  display: flex;
+  width: max-content;
+  gap: 1.25rem;
+  overflow-x: auto;
+  padding-bottom: 0.2rem;
+  scrollbar-width: thin;
+  flex-wrap: nowrap;
+  min-width: 100%;
+}
+
+.tab-button {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  border: 0;
+  background: transparent;
+  color: #8a8f98;
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 0 0 0.85rem;
+  white-space: nowrap;
+}
+
+.tab-button::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  border-radius: 999px;
+  background: transparent;
+}
+
+.tab-button.is-active {
+  color: #4a56c9;
+}
+
+.tab-button.is-active::after {
+  background: #5b61ff;
+}
+
 .toggle-row {
   display: inline-flex;
   align-items: center;
   gap: 0.65rem;
-  color: #111827;
+  min-height: 44px;
+  border: 1px solid #d7e3fb;
+  border-radius: 999px;
+  background: #f8fbff;
+  color: #14213d;
   font-size: 0.9rem;
   font-weight: 600;
+  padding: 0.65rem 0.95rem;
 }
 
 .toggle-row input {
@@ -456,7 +569,8 @@ onMounted(loadAvailability)
 
 .day-card {
   display: grid;
-  gap: 1rem;
+  gap: 1.1rem;
+  background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
 }
 
 .slot-grid {
@@ -465,17 +579,24 @@ onMounted(loadAvailability)
   gap: 0.85rem;
 }
 
+.slot-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
 .slot-chip {
   display: inline-flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.7rem;
   min-height: 42px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #d7e3fb;
   border-radius: 999px;
-  background: #f3f4f6;
-  color: #111827;
-  font-size: 0.95rem;
+  background: #f8fbff;
+  color: #14213d;
+  font-size: 0.92rem;
   font-weight: 600;
   padding: 0.55rem 0.8rem 0.55rem 0.95rem;
 }
@@ -487,14 +608,19 @@ onMounted(loadAvailability)
   width: 1.3rem;
   height: 1.3rem;
   border-radius: 999px;
-  background: #111827;
-  color: #fff;
+  background: #3157b7;
+  color: #ffffff;
   font-size: 0.8rem;
   line-height: 1;
 }
 
 .range-row {
   justify-content: flex-start;
+}
+
+.day-tools {
+  border-top: 1px solid #e8eef8;
+  padding-top: 0.2rem;
 }
 
 .field {
@@ -509,9 +635,9 @@ onMounted(loadAvailability)
 .field select {
   width: 100%;
   min-height: 42px;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  background: #fff;
+  border: 1px solid #d7e3f2;
+  border-radius: 12px;
+  background: #ffffff;
   color: #111827;
   font: inherit;
   padding: 0.75rem 0.9rem;
@@ -550,13 +676,13 @@ onMounted(loadAvailability)
 .primary-action {
   border: 1px solid #3157b7;
   background: #3157b7;
-  color: #fff;
+  color: #ffffff;
 }
 
 .clear-button {
-  border: 1px solid #d1d5db;
-  background: #e5e7eb;
-  color: #4b5563;
+  border: 1px solid #d7e3fb;
+  background: #f5f8ff;
+  color: #3157b7;
 }
 
 .secondary-action {
@@ -579,6 +705,10 @@ onMounted(loadAvailability)
   margin-top: 1.25rem;
 }
 
+.closure-action-row {
+  margin-bottom: 1.1rem;
+}
+
 .error-copy {
   color: #b91c1c;
   font-size: 0.9rem;
@@ -595,8 +725,18 @@ onMounted(loadAvailability)
 }
 
 @media (max-width: 980px) {
+  .tabs-panel {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tabs-row {
+    min-width: max-content;
+    padding-right: 0.35rem;
+  }
+
   .slot-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -605,7 +745,8 @@ onMounted(loadAvailability)
   .closure-card,
   .action-row,
   .range-row,
-  .day-actions {
+  .day-actions,
+  .slot-section-head {
     align-items: stretch;
     flex-direction: column;
   }

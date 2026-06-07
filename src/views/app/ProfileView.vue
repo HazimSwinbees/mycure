@@ -18,6 +18,9 @@ const saveError = ref('')
 const isSaving = ref(false)
 const router = useRouter()
 const activeEditor = ref('')
+const fileInput = ref(null)
+const selectedPhoto = ref(null)
+const photoPreviewUrl = ref('')
 
 const medicalHistoryState = reactive({
   allergies: '',
@@ -43,6 +46,7 @@ const personalForm = reactive({
   phone: '',
   homeAddress: '',
   dateOfBirth: '',
+  photoName: '',
 })
 
 const medicalForm = reactive({
@@ -87,10 +91,11 @@ const initials = computed(() => {
 })
 
 const profileSummary = computed(() => [
-  { label: 'Patient ID', value: patient.value?.ic_passport_number || 'Not provided' },
   { label: 'Gender', value: patient.value?.gender || 'Not provided' },
   { label: 'Role', value: 'Patient' },
 ])
+
+const displayPhotoUrl = computed(() => photoPreviewUrl.value || patient.value?.photo_url || '')
 
 const personalInfo = computed(() => [
   { label: 'First name', value: patient.value?.first_name || 'Not provided' },
@@ -134,6 +139,9 @@ const populatePersonalForm = () => {
   personalForm.phone = patient.value?.phone || ''
   personalForm.homeAddress = patient.value?.home_address || ''
   personalForm.dateOfBirth = patient.value?.date_of_birth || ''
+  personalForm.photoName = ''
+  selectedPhoto.value = null
+  photoPreviewUrl.value = ''
 }
 
 const populateMedicalForm = () => {
@@ -163,6 +171,28 @@ const openEditor = (section) => {
 const closeEditor = () => {
   activeEditor.value = ''
   saveError.value = ''
+  selectedPhoto.value = null
+  personalForm.photoName = ''
+  photoPreviewUrl.value = ''
+}
+
+const openPhotoPicker = () => {
+  fileInput.value?.click()
+}
+
+const handlePhotoChange = (event) => {
+  const [file] = event.target.files || []
+
+  if (!file) {
+    selectedPhoto.value = null
+    personalForm.photoName = ''
+    photoPreviewUrl.value = ''
+    return
+  }
+
+  selectedPhoto.value = file
+  personalForm.photoName = file.name
+  photoPreviewUrl.value = URL.createObjectURL(file)
 }
 
 const saveEditor = async () => {
@@ -177,6 +207,7 @@ const saveEditor = async () => {
         phone: personalForm.phone,
         homeAddress: personalForm.homeAddress,
         dateOfBirth: personalForm.dateOfBirth,
+        photo: selectedPhoto.value,
       })
   }
 
@@ -264,7 +295,7 @@ onMounted(async () => {
         <aside class="profile-summary">
           <section class="summary-card">
             <div class="profile-avatar" aria-hidden="true">
-              <img v-if="patient?.photo_url" :src="patient.photo_url" alt="" />
+              <img v-if="displayPhotoUrl" :src="displayPhotoUrl" alt="" />
               <span v-else>{{ initials }}</span>
             </div>
 
@@ -361,6 +392,25 @@ onMounted(async () => {
 
           <form class="edit-form" @submit.prevent="saveEditor">
             <template v-if="activeEditor === 'personal'">
+              <div class="form-field form-field-wide">
+                <span>Profile photo</span>
+                <input
+                  ref="fileInput"
+                  class="photo-input"
+                  type="file"
+                  accept="image/*"
+                  @change="handlePhotoChange"
+                />
+                <div class="photo-upload-row">
+                  <button class="photo-upload-button" type="button" @click="openPhotoPicker">
+                    {{ patient?.photo_url ? 'Change photo' : 'Add photo' }}
+                  </button>
+                  <strong>{{ personalForm.photoName || 'No new file selected' }}</strong>
+                </div>
+                <div v-if="displayPhotoUrl" class="photo-preview">
+                  <img :src="displayPhotoUrl" alt="Profile preview" />
+                </div>
+              </div>
               <label class="form-field">
                 <span>First name</span>
                 <input v-model="personalForm.firstName" type="text" />
@@ -598,7 +648,8 @@ onMounted(async () => {
 .modal-secondary,
 .modal-primary,
 .modal-close,
-.summary-logout {
+.summary-logout,
+.photo-upload-button {
   cursor: pointer;
 }
 
@@ -696,6 +747,52 @@ onMounted(async () => {
   font: inherit;
   padding: 0.8rem 0.9rem;
   resize: vertical;
+}
+
+.photo-input {
+  display: none;
+}
+
+.photo-upload-row {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.photo-upload-row strong {
+  color: #111827;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.photo-upload-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.7rem;
+  border: 1px solid #d7e3fb;
+  border-radius: 12px;
+  background: #f5f8ff;
+  color: #3157b7;
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 0.7rem 1rem;
+}
+
+.photo-preview {
+  width: 96px;
+  height: 96px;
+  overflow: hidden;
+  border: 1px solid #dbe2ea;
+  border-radius: 18px;
+  background: #f8fafc;
+}
+
+.photo-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .form-field input:focus,

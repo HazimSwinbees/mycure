@@ -1,27 +1,6 @@
 <script setup>
 const partners = ['Diligent', 'Eclipse', 'Brilliant', 'Polaris', 'Ignite', 'Fusion']
 
-const doctors = [
-  {
-    name: 'Dr. Michael Johnson',
-    role: 'Medicine Specialist',
-    image:
-      'https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=700&q=85',
-  },
-  {
-    name: 'Dr. William Smith',
-    role: 'Pediatrician',
-    image:
-      'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&w=700&q=85',
-  },
-  {
-    name: 'Dr. Melinda Scott',
-    role: 'Dental Surgeon',
-    image:
-      'https://images.unsplash.com/photo-1582750433449-648ed127bb54?auto=format&fit=crop&w=700&q=85',
-  },
-]
-
 const faqs = [
   {
     question: 'How experienced are the doctors?',
@@ -35,7 +14,7 @@ const faqs = [
   },
   {
     question: 'How can I book an appointment?',
-    answer: 'Use the appointment form below or register through the patient portal.',
+    answer: 'Register or log in to the patient portal, then book your appointment online.',
   },
   {
     question: 'What should I do in case of an emergency?',
@@ -48,27 +27,6 @@ const faqs = [
       'We provide routine wellness checks, chronic care reviews, and preventive screening packages.',
   },
 ]
-
-const posts = [
-  {
-    title: '5 Effective Ways to Prevent Diabetes',
-    date: 'November 10, 2025',
-    image:
-      'https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=700&q=85',
-  },
-  {
-    title: 'Daily Habits for a Healthy Heart',
-    date: 'November 10, 2025',
-    image:
-      'https://images.unsplash.com/photo-1624727828489-a1e03b79bba8?auto=format&fit=crop&w=700&q=85',
-  },
-  {
-    title: "How to Boost Children's Immunity",
-    date: 'November 10, 2025',
-    image:
-      'https://images.unsplash.com/photo-1472162072942-cd5147eb3902?auto=format&fit=crop&w=700&q=85',
-  },
-]
 </script>
 
 <template>
@@ -76,12 +34,9 @@ const posts = [
     <section class="hero-panel">
       <div class="hero-copy">
         <p class="eyebrow">Clinic Service</p>
-        <h1 id="landing-title">Healthcare Made Simple & Accessible</h1>
+        <h1 id="landing-title">Healthcare Made Simple and Accessible</h1>
         <p>Expert doctors, modern treatment, and friendly service all in one place.</p>
-        <RouterLink class="action-button" :to="{ name: 'login' }">
-          Book appointment
-          <span aria-hidden="true">›</span>
-        </RouterLink>
+        <RouterLink class="action-button" :to="{ name: 'booking' }">Book appointment</RouterLink>
       </div>
       <img
         class="hero-image"
@@ -118,10 +73,7 @@ const posts = [
           everyone. We believe caring for patients is more than treatment; it is a relationship
           built on trust, clear guidance, and compassionate care.
         </p>
-        <RouterLink class="action-button" :to="{ name: 'login' }">
-          Book appointment
-          <span aria-hidden="true">›</span>
-        </RouterLink>
+        <RouterLink class="action-button" :to="{ name: 'booking' }">Book appointment</RouterLink>
 
         <dl class="stats-grid">
           <div>
@@ -140,23 +92,6 @@ const posts = [
       </div>
     </section>
 
-    <section id="services" class="departments-section" aria-labelledby="departments-title">
-      <div class="section-wrap">
-        <div class="section-heading">
-          <h2 id="departments-title">Our Departments & Specialties</h2>
-          <p>Quality care provided by expert specialists in every department</p>
-        </div>
-
-        <div class="doctor-grid">
-          <article v-for="doctor in doctors" :key="doctor.name" class="doctor-card">
-            <img :src="doctor.image" :alt="doctor.name" />
-            <h3>{{ doctor.name }}</h3>
-            <p>{{ doctor.role }}</p>
-          </article>
-        </div>
-      </div>
-    </section>
-
     <section id="faq" class="faq-section section-wrap" aria-labelledby="faq-title">
       <div class="section-heading">
         <h2 id="faq-title">Frequently Asked Questions</h2>
@@ -171,64 +106,11 @@ const posts = [
       </div>
     </section>
 
-    <section id="blogs" class="tips-section section-wrap" aria-labelledby="tips-title">
-      <div class="section-heading">
-        <h2 id="tips-title">Health Tips & Insights</h2>
-        <p>
-          Your trusted source for daily wellness, disease prevention, and healthy lifestyle guidance
-        </p>
-      </div>
-
-      <div class="post-grid">
-        <article v-for="post in posts" :key="post.title" class="post-card">
-          <img :src="post.image" :alt="post.title" />
-          <h3>{{ post.title }}</h3>
-          <p>{{ post.date }}</p>
-        </article>
-      </div>
-    </section>
-
-    <section id="appointment" class="appointment-section" aria-labelledby="appointment-title">
-      <div class="section-wrap appointment-wrap">
-        <div class="section-heading">
-          <h2 id="appointment-title">Appointment</h2>
-          <p>
-            Book your appointment online at your convenient time. Our team will confirm your
-            schedule quickly.
-          </p>
-        </div>
-
-        <form class="appointment-form">
-          <input aria-label="Name" placeholder="Name" />
-          <input aria-label="Phone Number" placeholder="Phone Number" />
-          <select aria-label="Choose Department">
-            <option>Choose Department</option>
-            <option>Primary Care</option>
-            <option>Dental Care</option>
-            <option>Health Screening</option>
-          </select>
-          <input aria-label="Date and Time" placeholder="Date & Time" />
-          <textarea aria-label="Message" placeholder="Message (optional)"></textarea>
-        </form>
-
-        <RouterLink class="action-button" :to="{ name: 'login' }">
-          Book appointment
-          <span aria-hidden="true">›</span>
-        </RouterLink>
-      </div>
-    </section>
-
     <footer class="clinic-footer">
       <div class="section-wrap footer-grid">
         <div>
-          <strong class="footer-brand">✚ Clinic</strong>
+          <strong class="footer-brand">MyCure Clinic</strong>
           <p>Expert doctors, modern treatment, and friendly service all in one place.</p>
-          <div class="socials" aria-label="Social media">
-            <span>f</span>
-            <span>x</span>
-            <span>◎</span>
-            <span>in</span>
-          </div>
         </div>
 
         <nav aria-label="Quick links">
@@ -236,15 +118,15 @@ const posts = [
           <RouterLink :to="{ name: 'landing' }">Home</RouterLink>
           <RouterLink :to="{ name: 'about-us' }">About us</RouterLink>
           <RouterLink :to="{ name: 'privacy-policy' }">Privacy policy</RouterLink>
-          <RouterLink :to="{ name: 'terms-and-conditions' }">Terms & Conditions</RouterLink>
+          <RouterLink :to="{ name: 'terms-and-conditions' }">Terms and Conditions</RouterLink>
         </nav>
 
         <nav aria-label="Social media links">
           <h3>Social Media</h3>
-          <a href="#">Facebook</a>
-          <a href="#">Instagram</a>
-          <a href="#">YouTube</a>
-          <a href="#">LinkedIn</a>
+          <a href="https://www.facebook.com" target="_blank" rel="noreferrer">Facebook</a>
+          <a href="https://www.instagram.com" target="_blank" rel="noreferrer">Instagram</a>
+          <a href="https://www.youtube.com" target="_blank" rel="noreferrer">YouTube</a>
+          <a href="https://www.linkedin.com" target="_blank" rel="noreferrer">LinkedIn</a>
         </nav>
 
         <address>
@@ -330,36 +212,18 @@ const posts = [
   box-shadow: 0 18px 34px rgba(0, 0, 0, 0.18);
 }
 
-.hero-panel .action-button span {
-  background: #0a2d66;
-  color: #ffffff;
-}
-
 .action-button {
   display: inline-flex;
   width: max-content;
   align-items: center;
   justify-content: center;
-  gap: 0.65rem;
   border-radius: 999px;
   background: var(--blue-700);
   color: #ffffff;
   font-size: 0.9rem;
   font-weight: 900;
-  padding: 0.82rem 1rem 0.82rem 1.25rem;
+  padding: 0.82rem 1.25rem;
   box-shadow: 0 16px 28px rgba(29, 99, 216, 0.24);
-}
-
-.action-button span {
-  display: grid;
-  width: 24px;
-  height: 24px;
-  place-items: center;
-  border-radius: 50%;
-  background: #ffffff;
-  color: var(--blue-800);
-  font-size: 1.2rem;
-  line-height: 1;
 }
 
 .hero-image {
@@ -430,8 +294,7 @@ const posts = [
   box-shadow: 0 18px 36px rgba(10, 45, 102, 0.14);
 }
 
-.about-copy,
-.appointment-wrap {
+.about-copy {
   display: grid;
   gap: 1.2rem;
 }
@@ -448,7 +311,6 @@ const posts = [
 .about-copy p,
 .section-heading p,
 .faq-list p,
-.post-card p,
 .clinic-footer p,
 .clinic-footer a,
 .clinic-footer span,
@@ -477,12 +339,6 @@ const posts = [
   font-weight: 700;
 }
 
-.departments-section,
-.appointment-section {
-  background: #f3f7fc;
-  padding: 6rem 0;
-}
-
 .section-heading {
   display: grid;
   justify-items: center;
@@ -495,45 +351,7 @@ const posts = [
   max-width: 540px;
 }
 
-.doctor-grid,
-.post-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1.5rem;
-}
-
-.doctor-card,
-.post-card {
-  display: grid;
-  gap: 0.75rem;
-}
-
-.doctor-card img,
-.post-card img {
-  width: 100%;
-  aspect-ratio: 0.96;
-  border-radius: 12px;
-  object-fit: cover;
-}
-
-.post-card img {
-  aspect-ratio: 1.55;
-}
-
-.doctor-card h3,
-.post-card h3 {
-  color: var(--text);
-  font-size: 1rem;
-  font-weight: 850;
-}
-
-.doctor-card p,
-.post-card p {
-  font-size: 0.82rem;
-}
-
-.faq-section,
-.tips-section {
+.faq-section {
   padding: 6rem 0;
 }
 
@@ -564,58 +382,17 @@ const posts = [
 }
 
 .faq-list summary::after {
-  display: grid;
-  width: 22px;
-  height: 22px;
-  place-items: center;
-  border: 1px solid #cbd5e1;
-  border-radius: 50%;
+  display: inline-block;
   color: var(--blue-800);
-  content: '+';
+  content: '>';
+  font-size: 1rem;
+  font-weight: 900;
+  transform: rotate(90deg);
+  transition: transform 180ms ease;
 }
 
 .faq-list details[open] summary::after {
-  content: '-';
-}
-
-.faq-list p {
-  max-width: 760px;
-  margin-top: 0.5rem;
-}
-
-.appointment-wrap {
-  justify-items: center;
-}
-
-.appointment-form {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.55rem;
-  width: min(760px, 100%);
-}
-
-.appointment-form input,
-.appointment-form select,
-.appointment-form textarea {
-  width: 100%;
-  border: 1px solid transparent;
-  border-radius: 0;
-  background: #ffffff;
-  color: var(--text);
-  padding: 1rem;
-}
-
-.appointment-form textarea {
-  min-height: 160px;
-  grid-column: 1 / -1;
-  resize: vertical;
-}
-
-.appointment-form input:focus,
-.appointment-form select:focus,
-.appointment-form textarea:focus {
-  border-color: var(--blue-700);
-  outline: 3px solid rgba(29, 99, 216, 0.12);
+  transform: rotate(270deg);
 }
 
 .clinic-footer {
@@ -650,21 +427,9 @@ const posts = [
   font-style: normal;
 }
 
-.socials {
-  display: flex;
-  gap: 0.6rem;
-  margin-top: 1rem;
-}
-
-.socials span {
-  display: grid;
-  width: 30px;
-  height: 30px;
-  place-items: center;
-  border-radius: 50%;
-  background: #1f2937;
-  color: #ffffff;
-  font-size: 0.75rem;
+.faq-list p {
+  max-width: 760px;
+  margin-top: 0.5rem;
 }
 
 .copyright {
@@ -686,11 +451,6 @@ const posts = [
   .hero-panel {
     justify-items: start;
   }
-
-  .doctor-grid,
-  .post-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 
 @media (max-width: 560px) {
@@ -707,9 +467,6 @@ const posts = [
     height: 260px;
   }
 
-  .doctor-grid,
-  .post-grid,
-  .appointment-form,
   .stats-grid {
     grid-template-columns: 1fr;
   }

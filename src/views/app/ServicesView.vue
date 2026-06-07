@@ -169,6 +169,7 @@ onMounted(loadServices)
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
+  min-width: 0;
 }
 
 .card-top {
@@ -222,6 +223,7 @@ onMounted(loadServices)
   display: grid;
   align-content: start;
   gap: 0.65rem;
+  min-width: 0;
 }
 
 .service-main h2 {
@@ -229,6 +231,7 @@ onMounted(loadServices)
   font-size: 1.28rem;
   font-weight: 700;
   line-height: 1.15;
+  overflow-wrap: anywhere;
 }
 
 .service-description {
@@ -246,6 +249,7 @@ onMounted(loadServices)
   gap: 0.75rem;
   border-top: 1px solid #e8eef9;
   padding-top: 1rem;
+  flex-wrap: wrap;
 }
 
 .details-link,
@@ -253,7 +257,7 @@ onMounted(loadServices)
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex: 1 1 0;
+  flex: 1 1 180px;
   min-height: 40px;
   border: 1px solid #e5e7eb;
   border-radius: 10px;
@@ -263,6 +267,7 @@ onMounted(loadServices)
   font-weight: 600;
   padding: 0.65rem 0.9rem;
   text-align: center;
+  white-space: normal;
   transition:
     border-color 180ms ease,
     background 180ms ease,
@@ -317,6 +322,18 @@ onMounted(loadServices)
 }
 
 @media (min-width: 760px) {
+  .services-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1100px) {
+  .services-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1440px) {
   .services-list {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }

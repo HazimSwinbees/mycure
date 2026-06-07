@@ -10,6 +10,10 @@ const props = defineProps({
     type: String,
     default: 'Patient',
   },
+  photoUrl: {
+    type: String,
+    default: '',
+  },
 })
 
 defineEmits(['toggle-sidebar'])
@@ -46,10 +50,22 @@ const initials = computed(() =>
     </div>
 
     <div class="topbar-actions">
-      <RouterLink class="action-link" :to="{ name: 'notifications' }">Notifications</RouterLink>
-      <RouterLink class="profile-link" :to="{ name: 'profile' }">
-        <span class="profile-mark" aria-hidden="true">{{ initials }}</span>
-        <span>{{ userName }}</span>
+      <RouterLink class="icon-link" :to="{ name: 'notifications' }" aria-label="Notifications">
+        <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+          <path
+            d="M10 3.5a4 4 0 0 1 4 4v2.2c0 .8.3 1.6.8 2.3l1 1.2c.4.5.1 1.3-.6 1.3H4.8c-.7 0-1-.8-.6-1.3l1-1.2c.5-.7.8-1.5.8-2.3V7.5a4 4 0 0 1 4-4Zm-1.8 14a1.8 1.8 0 0 0 3.6 0"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.6"
+          />
+        </svg>
+      </RouterLink>
+      <RouterLink class="profile-link compact-profile" :to="{ name: 'profile' }" aria-label="Profile">
+        <span class="profile-mark" aria-hidden="true">
+          <img v-if="photoUrl" :src="photoUrl" alt="" />
+          <span v-else>{{ initials }}</span>
+        </span>
       </RouterLink>
     </div>
   </header>
@@ -81,7 +97,7 @@ const initials = computed(() =>
 }
 
 .topbar-actions {
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: flex-end;
 }
 
@@ -115,7 +131,7 @@ const initials = computed(() =>
   line-height: 1.1;
 }
 
-.action-link,
+.icon-link,
 .profile-link {
   min-height: 40px;
   border: 1px solid rgba(215, 227, 245, 0.85);
@@ -125,6 +141,21 @@ const initials = computed(() =>
   font-size: 0.88rem;
   font-weight: 700;
   padding: 0.6rem 0.8rem;
+}
+
+.icon-link,
+.compact-profile {
+  display: inline-flex;
+  width: 40px;
+  min-width: 40px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.icon-link svg {
+  width: 1.15rem;
+  height: 1.15rem;
 }
 
 .profile-mark {
@@ -137,6 +168,13 @@ const initials = computed(() =>
   color: #ffffff;
   font-size: 0.7rem;
   font-weight: 800;
+  overflow: hidden;
+}
+
+.profile-mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 @media (min-width: 980px) {
@@ -146,21 +184,14 @@ const initials = computed(() =>
 }
 
 @media (max-width: 640px) {
-  .topbar,
-  .topbar-main,
-  .topbar-actions {
-    align-items: start;
-    flex-direction: column;
+  .topbar {
+    align-items: center;
+    flex-direction: row;
   }
 
   .topbar-actions {
-    width: 100%;
-  }
-
-  .action-link,
-  .profile-link {
-    width: 100%;
-    justify-content: center;
+    width: auto;
+    margin-left: auto;
   }
 }
 </style>

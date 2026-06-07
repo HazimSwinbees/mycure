@@ -166,7 +166,14 @@ onMounted(loadAppointment)
             <article class="detail-item"><span>Age / Gender</span><strong>{{ appointment.patientAge ?? '-' }} · {{ appointment.patientGender || '-' }}</strong></article>
             <article class="detail-item"><span>Phone</span><strong>{{ appointment.patientPhone || '-' }}</strong></article>
             <article class="detail-item"><span>Email</span><strong>{{ appointment.patientEmail || '-' }}</strong></article>
-            <article class="detail-item"><span>Patient ID</span><strong>{{ appointment.patientId }}</strong></article>
+          </div>
+          <div class="panel-link-row">
+            <RouterLink
+              class="secondary-action link-button"
+              :to="{ name: 'admin-patient-profile', params: { id: appointment.patientId } }"
+            >
+              View patient profile
+            </RouterLink>
           </div>
         </section>
       </div>
@@ -391,6 +398,12 @@ onMounted(loadAppointment)
 .action-row {
   justify-content: flex-start;
   flex-wrap: wrap;
+}
+
+.panel-link-row {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 1rem;
 }
 
 .primary-action,

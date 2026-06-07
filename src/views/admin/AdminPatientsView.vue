@@ -53,7 +53,9 @@ onMounted(async () => {
         <h1>Patient directory</h1>
         <p class="muted-copy">Review active patient records and open full details from the list.</p>
       </div>
+    </section>
 
+    <section class="search-panel">
       <label class="search-field">
         <span>Search patient</span>
         <input v-model="searchTerm" type="search" placeholder="Search by name, ID, phone, or condition" />
@@ -128,6 +130,7 @@ onMounted(async () => {
 }
 
 .hero-panel,
+.search-panel,
 .list-shell,
 .patient-row {
   border: 1px solid #e5e7eb;
@@ -136,15 +139,14 @@ onMounted(async () => {
 }
 
 .hero-panel,
+.search-panel,
 .list-shell {
   padding: 1.25rem;
 }
 
 .hero-panel {
-  display: flex;
-  align-items: end;
-  justify-content: space-between;
-  gap: 1rem;
+  display: grid;
+  gap: 0.5rem;
 }
 
 .hero-copy {
@@ -177,7 +179,11 @@ onMounted(async () => {
 .search-field {
   display: grid;
   gap: 0.45rem;
-  width: min(100%, 360px);
+  width: 100%;
+}
+
+.search-panel {
+  display: block;
 }
 
 .search-field span {
@@ -300,13 +306,12 @@ onMounted(async () => {
 }
 
 @media (max-width: 980px) {
-  .hero-panel {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
   .search-field {
     width: 100%;
+  }
+
+  .search-panel {
+    justify-content: stretch;
   }
 
   .list-head {

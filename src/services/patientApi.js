@@ -4,6 +4,34 @@ const patientProfilesTable = 'patient_profiles'
 const patientMedicalHistoryTable = 'patient_medical_history'
 const patientEmergencyContactsTable = 'patient_emergency_contacts'
 const appointmentsTable = 'appointments'
+const patientPhotosBucket = 'patient-photos'
+
+const sanitizeFileName = (name) => String(name || 'photo').replace(/[^a-zA-Z0-9._-]/g, '_')
+
+const uploadPatientPhoto = async (userId, photo) => {
+  if (!photo) {
+    return { photoPath: '', photoUrl: '' }
+  }
+
+  const photoPath = `${userId}/${Date.now()}-${sanitizeFileName(photo.name)}`
+  const { error: uploadError } = await supabase.storage
+    .from(patientPhotosBucket)
+    .upload(photoPath, photo, {
+      contentType: photo.type,
+      upsert: true,
+    })
+
+  if (uploadError) {
+    throw new Error(uploadError.message)
+  }
+
+  const { data } = supabase.storage.from(patientPhotosBucket).getPublicUrl(photoPath)
+
+  return {
+    photoPath,
+    photoUrl: data?.publicUrl || '',
+  }
+}
 
 const formatAge = (dateOfBirth) => {
   if (!dateOfBirth) return null
@@ -140,6 +168,7 @@ export const updateCurrentPatientProfile = async ({
   phone,
   homeAddress,
   dateOfBirth,
+  photo,
 }) => {
   const userId = await getCurrentAuthenticatedUserId()
 
@@ -161,6 +190,12 @@ export const updateCurrentPatientProfile = async ({
 
   const authUser = authUserData?.user
   const fallbackProfile = formatFallbackProfile(authUser)
+  const { photoPath, photoUrl } = photo
+    ? await uploadPatientPhoto(userId, photo)
+    : {
+        photoPath: existingProfile?.photo_path || fallbackProfile.photo_path || null,
+        photoUrl: existingProfile?.photo_url || fallbackProfile.photo_url || null,
+      }
 
   const payload = {
     id: userId,
@@ -173,8 +208,8 @@ export const updateCurrentPatientProfile = async ({
     email: existingProfile?.email || fallbackProfile.email,
     ic_passport_number: existingProfile?.ic_passport_number || fallbackProfile.ic_passport_number,
     gender: existingProfile?.gender || fallbackProfile.gender,
-    photo_path: existingProfile?.photo_path || fallbackProfile.photo_path || null,
-    photo_url: existingProfile?.photo_url || fallbackProfile.photo_url || null,
+    photo_path: photoPath,
+    photo_url: photoUrl,
     role: existingProfile?.role || fallbackProfile.role || 'patient',
   }
 

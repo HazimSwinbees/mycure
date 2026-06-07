@@ -11,19 +11,7 @@ const activeFilter = ref('All')
 const selectedNotification = ref(null)
 const isLoading = ref(true)
 const errorMessage = ref('')
-const filterOptions = ['All', 'Unread', 'Appointments', 'Medical Records', 'Prescriptions']
-
-const unreadCount = computed(() => notifications.value.filter((item) => !item.read).length)
-const todayCount = computed(() =>
-  notifications.value.filter(
-    (item) =>
-      item.time === 'Today' ||
-      item.time === 'Just now' ||
-      item.time.includes('min') ||
-      item.time.includes('hr') ||
-      item.time.includes('hour'),
-  ).length,
-)
+const filterOptions = ['All', 'Read', 'Unread']
 
 const filteredNotifications = computed(() => {
   if (activeFilter.value === 'All') {
@@ -34,7 +22,11 @@ const filteredNotifications = computed(() => {
     return notifications.value.filter((item) => !item.read)
   }
 
-  return notifications.value.filter((item) => item.type === activeFilter.value)
+  if (activeFilter.value === 'Read') {
+    return notifications.value.filter((item) => item.read)
+  }
+
+  return notifications.value
 })
 
 const loadNotifications = async () => {
@@ -57,20 +49,10 @@ const handleMarkAllRead = async () => {
   } catch (error) {
     errorMessage.value = error.message || 'Unable to update notifications right now.'
   }
-
-  if (selectedNotification.value) {
-    selectedNotification.value = {
-      ...selectedNotification.value,
-      read: true,
-    }
-  }
 }
 
 const openNotification = async (notification) => {
-  selectedNotification.value = {
-    ...notification,
-    read: true,
-  }
+  selectedNotification.value = notification
 
   if (notification.read) {
     return
@@ -82,6 +64,7 @@ const openNotification = async (notification) => {
 
   try {
     await markDoctorNotificationRead(notification.id)
+    selectedNotification.value = { ...notification, read: true }
   } catch (error) {
     errorMessage.value = error.message || 'Unable to update notifications right now.'
   }
@@ -99,28 +82,13 @@ onMounted(loadNotifications)
     <section class="hero-panel">
       <div class="hero-copy">
         <p class="section-label">Notifications</p>
-        <h1>Doctor alerts and updates</h1>
+        <h1>Recent updates</h1>
         <p class="muted-copy">
-          Review booking activity, follow-up reminders, and clinic notices in one place.
+          Review appointment alerts, patient activity, and clinic reminders in one place.
         </p>
       </div>
 
       <button class="secondary-button" type="button" @click="handleMarkAllRead">Mark all read</button>
-    </section>
-
-    <section class="summary-strip">
-      <article class="summary-item">
-        <span>Unread</span>
-        <strong>{{ unreadCount }}</strong>
-      </article>
-      <article class="summary-item">
-        <span>Today</span>
-        <strong>{{ todayCount }}</strong>
-      </article>
-      <article class="summary-item">
-        <span>Total</span>
-        <strong>{{ notifications.length }}</strong>
-      </article>
     </section>
 
     <section class="filter-bar">
@@ -139,7 +107,7 @@ onMounted(loadNotifications)
       <div v-if="isLoading" class="empty-state">
         <p class="section-label">Inbox</p>
         <h2>Loading notifications</h2>
-        <p class="muted-copy">Fetching doctor alerts and updates.</p>
+        <p class="muted-copy">Fetching your latest updates.</p>
       </div>
 
       <div v-else-if="errorMessage" class="empty-state">
@@ -175,7 +143,6 @@ onMounted(loadNotifications)
               </div>
 
               <div class="meta-wrap">
-                <span class="type-chip">{{ notification.type }}</span>
                 <small>{{ notification.time }}</small>
               </div>
             </div>
@@ -213,7 +180,6 @@ onMounted(loadNotifications)
 }
 
 .hero-panel,
-.summary-strip,
 .filter-bar {
   border: 1px solid #e5e7eb;
   border-radius: 12px;
@@ -221,7 +187,6 @@ onMounted(loadNotifications)
 }
 
 .hero-panel,
-.summary-strip,
 .filter-bar {
   padding: 1.25rem;
 }
@@ -257,8 +222,7 @@ onMounted(loadNotifications)
 
 .muted-copy,
 .title-wrap p,
-.meta-wrap small,
-.summary-item span {
+.meta-wrap small {
   color: #6b7280;
 }
 
@@ -271,29 +235,6 @@ onMounted(loadNotifications)
   font-size: 0.92rem;
   font-weight: 600;
   padding: 0.75rem 1rem;
-}
-
-.summary-strip {
-  display: grid;
-  gap: 1rem;
-}
-
-.summary-item {
-  display: grid;
-  gap: 0.2rem;
-  border-top: 1px solid #f1f5f9;
-  padding-top: 0.95rem;
-}
-
-.summary-item:first-child {
-  border-top: 0;
-  padding-top: 0;
-}
-
-.summary-item strong {
-  color: #111827;
-  font-size: 1.2rem;
-  font-weight: 700;
 }
 
 .filter-bar {
@@ -477,22 +418,6 @@ onMounted(loadNotifications)
   .hero-panel {
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: end;
-  }
-
-  .summary-strip {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .summary-item {
-    border-top: 0;
-    border-left: 1px solid #f1f5f9;
-    padding-top: 0;
-    padding-left: 1rem;
-  }
-
-  .summary-item:first-child {
-    border-left: 0;
-    padding-left: 0;
   }
 
   .notification-head {

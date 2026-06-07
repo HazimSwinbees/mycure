@@ -19,13 +19,13 @@ const patient = ref(null)
 const navigationItems = [
   { label: 'Dashboard', to: { name: 'dashboard' }, icon: 'dashboard' },
   { label: 'Services', to: { name: 'services' }, icon: 'services' },
-  { label: 'Clinic & Doctor Info', to: { name: 'clinic-and-doctor-info' }, icon: 'clinic' },
-  { label: 'Gemini Chat', to: { name: 'gemini-chat' }, icon: 'chat' },
-  { label: 'Symptom Checker', to: { name: 'symptom-checker' }, icon: 'symptoms' },
-  { label: 'Medical Visits', to: { name: 'prescriptions' }, icon: 'prescriptions' },
-  { label: 'Appointments', to: { name: 'appointments' }, icon: 'appointments' },
-  { label: 'Notifications', to: { name: 'notifications' }, icon: 'notifications' },
   { label: 'Book Appointment', to: { name: 'booking' }, icon: 'booking' },
+  { label: 'Appointments', to: { name: 'appointments' }, icon: 'appointments' },
+  { label: 'Medical Visits', to: { name: 'prescriptions' }, icon: 'prescriptions' },
+  { label: 'Symptom Checker', to: { name: 'symptom-checker' }, icon: 'symptoms' },
+  { label: 'Gemini Chat', to: { name: 'gemini-chat' }, icon: 'chat' },
+  { label: 'Clinic & Doctor Info', to: { name: 'clinic-and-doctor-info' }, icon: 'clinic' },
+  { label: 'Notifications', to: { name: 'notifications' }, icon: 'notifications' },
 ]
 
 const currentUser = computed(() => ({
@@ -305,10 +305,13 @@ onMounted(async () => {
   gap: 0.9rem;
   min-height: 2.75rem;
   border-radius: 10px;
+  border: 1px solid transparent;
   color: #6b7280;
   padding: 0.5rem 0.25rem;
   transition:
     background 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
     color 160ms ease,
     transform 160ms ease;
 }
@@ -320,7 +323,15 @@ onMounted(async () => {
 }
 
 .nav-link.router-link-active {
-  color: #111827;
+  border-color: #dbe7fb;
+  background: linear-gradient(180deg, #f7faff 0%, #eef4ff 100%);
+  box-shadow: 0 10px 24px rgba(49, 87, 183, 0.08);
+  color: #3157b7;
+}
+
+.nav-link.router-link-active .nav-label {
+  color: #163c8c;
+  font-weight: 600;
 }
 
 .nav-icon {

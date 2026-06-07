@@ -33,6 +33,18 @@ const filteredAppointments = computed(() => {
     : appointments.value.filter((item) => item.status === activeStatus.value)
 })
 
+const getStatusCount = (status) => {
+  if (status === 'Upcoming') {
+    return appointments.value.filter(isUpcomingAppointment).length
+  }
+
+  if (status === 'All') {
+    return appointments.value.length
+  }
+
+  return appointments.value.filter((item) => item.status === status).length
+}
+
 const usesGroupedLayout = computed(() => ['Upcoming', 'All'].includes(activeStatus.value))
 
 const formatDateLabel = (value) => {
@@ -163,7 +175,8 @@ onMounted(async () => {
           type="button"
           @click="activeStatus = status"
         >
-          {{ status }}
+          <span>{{ status }}</span>
+          <strong>{{ getStatusCount(status) }}</strong>
         </button>
       </div>
     </section>
@@ -345,11 +358,19 @@ onMounted(async () => {
 
 .tabs-row {
   display: flex;
-  gap: 1.5rem;
+  width: max-content;
+  gap: 1.25rem;
   overflow-x: auto;
+  padding-bottom: 0.2rem;
+  scrollbar-width: thin;
+  flex-wrap: nowrap;
+  min-width: 100%;
 }
 
 .tab-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
   position: relative;
   border: 0;
   background: transparent;
@@ -358,6 +379,12 @@ onMounted(async () => {
   font-weight: 600;
   padding: 0 0 0.85rem;
   white-space: nowrap;
+}
+
+.tab-button strong {
+  color: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
 }
 
 .tab-button::after {
@@ -496,6 +523,16 @@ onMounted(async () => {
 }
 
 @media (max-width: 980px) {
+  .tabs-panel {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tabs-row {
+    min-width: max-content;
+    padding-right: 0.35rem;
+  }
+
   .list-head {
     display: none;
   }

@@ -54,7 +54,6 @@ const initials = computed(() => {
 })
 
 const profileSummary = computed(() => [
-  { label: 'Patient ID', value: patient.value?.id || '-' },
   { label: 'Gender', value: patient.value?.gender || '-' },
   { label: 'Role', value: 'Patient' },
 ])

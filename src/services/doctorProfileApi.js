@@ -3,15 +3,15 @@ import { supabase } from '../lib/supabaseClient'
 const doctorProfilesTable = 'doctor_profiles'
 
 const defaultDoctorProfile = {
-  fullName: 'Dr. Sarah Lee',
-  roleTitle: 'General Practitioner',
-  qualification: 'MBBS, University of Malaya',
-  experience: '8 Years',
-  languages: ['English', 'Malay', 'Mandarin'],
-  specializations: ['General Medicine', 'Family Health', 'Preventive Care'],
-  workingHours: ['Mon - Fri: 9 AM - 5 PM', 'Sat: 9 AM - 12 PM'],
-  about:
-    'Dr. Sarah Lee has extensive experience in primary healthcare and preventive medicine.',
+  id: '',
+  fullName: '',
+  roleTitle: '',
+  qualification: '',
+  experience: '',
+  languages: [],
+  specializations: [],
+  workingHours: [],
+  about: '',
   photoUrl: '',
 }
 
@@ -31,6 +31,7 @@ const toArray = (value) => {
 }
 
 const mapDoctorProfile = (record) => ({
+  id: record?.id || defaultDoctorProfile.id,
   fullName: record?.full_name || defaultDoctorProfile.fullName,
   roleTitle: record?.role_title || defaultDoctorProfile.roleTitle,
   qualification: record?.qualification || defaultDoctorProfile.qualification,
@@ -99,11 +100,7 @@ export const getDoctorProfiles = async () => {
     throw new Error(error.message)
   }
 
-  if (!data?.length) {
-    return [defaultDoctorProfile]
-  }
-
-  return data.map(mapDoctorProfile)
+  return (data || []).map(mapDoctorProfile)
 }
 
 export const updateCurrentDoctorProfile = async ({

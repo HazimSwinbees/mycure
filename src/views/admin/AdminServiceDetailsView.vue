@@ -381,16 +381,29 @@ onMounted(loadService)
 
 .primary-link,
 .modal-primary {
-  border: 1px solid #111827;
-  background: #111827;
+  border: 1px solid #4a56c9;
+  background: #4a56c9;
   color: #ffffff;
 }
 
 .secondary-link,
 .modal-secondary {
-  border: 1px solid #e5e7eb;
-  background: #ffffff;
-  color: #111827;
+  border: 1px solid #d7e3fb;
+  background: #f5f8ff;
+  color: #3157b7;
+}
+
+.primary-link:hover,
+.modal-primary:hover {
+  border-color: #3f4fb3;
+  background: #3f4fb3;
+}
+
+.secondary-link:hover,
+.modal-secondary:hover {
+  border-color: #bfd0f7;
+  background: #eef4ff;
+  color: #27479b;
 }
 
 .service-badge,

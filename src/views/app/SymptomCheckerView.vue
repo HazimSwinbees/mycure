@@ -46,8 +46,10 @@ const orderedCholesterolOptions = computed(() =>
 )
 
 const topMatches = computed(() => matches.value.slice(0, 3))
+const maxMatchScore = 15
 
 const formatLevelOption = (value) => levelDisplayMap[value] || value
+const formatMatchPercentage = (score) => `${Math.round((Number(score || 0) / maxMatchScore) * 100)}%`
 
 const buildBookingReason = (match) => {
   const activeSymptoms = symptomOptions.value
@@ -232,14 +234,9 @@ onMounted(async () => {
           <button class="diagnose-button" type="button" @click="runDiagnosis">Diagnose</button>
           <button class="clear-button" type="button" @click="clearForm">Clear</button>
         </div>
-
-        <p class="disclaimer">
-          The results are based on the uploaded CSV records and should not be treated as a medical
-          diagnosis.
-        </p>
       </section>
 
-      <section class="matches-section">
+      <section v-if="diagnosed" class="matches-section">
         <div class="panel-head">
           <div>
             <p class="section-label">Disease results</p>
@@ -247,15 +244,12 @@ onMounted(async () => {
           </div>
         </div>
 
-        <section v-if="!diagnosed" class="state-panel">
-          <p class="section-label">Ready</p>
-          <h2>Run the checker to see disease matches</h2>
-          <p class="muted-copy">
-            Click <strong>Diagnose</strong> after filling in the symptom and patient details.
-          </p>
-        </section>
+        <p class="disclaimer results-disclaimer">
+          The results are based on the uploaded CSV records and should not be treated as a medical
+          diagnosis.
+        </p>
 
-        <section v-else-if="!matches.length" class="state-panel">
+        <section v-if="!matches.length" class="state-panel">
           <p class="section-label">No match</p>
           <h2>No disease matches found</h2>
           <p class="muted-copy">
@@ -276,7 +270,7 @@ onMounted(async () => {
                 <span class="rank-badge">Top {{ index + 1 }}</span>
                 <span class="match-badge">{{ match.matchLabel }}</span>
               </div>
-              <strong class="match-score">{{ match.score }} pts</strong>
+              <strong class="match-score">{{ formatMatchPercentage(match.score) }}</strong>
             </div>
 
             <div class="match-main">
@@ -284,25 +278,6 @@ onMounted(async () => {
               <p class="match-copy">
                 Matched on {{ match.reasons.join(', ').toLowerCase() }}.
               </p>
-            </div>
-
-            <div class="detail-grid">
-              <article class="detail-item">
-                <span>Age reference</span>
-                <strong>{{ match.age || '-' }}</strong>
-              </article>
-              <article class="detail-item">
-                <span>Gender</span>
-                <strong>{{ match.gender || '-' }}</strong>
-              </article>
-              <article class="detail-item">
-                <span>Blood pressure</span>
-                <strong>{{ match.bloodPressure ? formatLevelOption(match.bloodPressure) : '-' }}</strong>
-              </article>
-              <article class="detail-item">
-                <span>Cholesterol</span>
-                <strong>{{ match.cholesterolLevel ? formatLevelOption(match.cholesterolLevel) : '-' }}</strong>
-              </article>
             </div>
 
             <div class="match-actions">
@@ -393,8 +368,7 @@ onMounted(async () => {
   gap: 1rem;
 }
 
-.input-grid,
-.detail-grid {
+.input-grid {
   display: grid;
   gap: 0.85rem;
 }
@@ -467,7 +441,7 @@ onMounted(async () => {
 }
 
 .action-row {
-  justify-content: center;
+  justify-content: flex-end;
   margin-top: 1rem;
 }
 
@@ -511,9 +485,11 @@ onMounted(async () => {
 }
 
 .disclaimer {
-  margin-top: 1rem;
-  text-align: center;
   line-height: 1.6;
+}
+
+.results-disclaimer {
+  margin: 0;
 }
 
 .match-card {
@@ -562,8 +538,7 @@ onMounted(async () => {
   padding: 0.38rem 0.72rem;
 }
 
-.match-score,
-.detail-item strong {
+.match-score {
   color: #111827;
   font-weight: 600;
 }
@@ -571,17 +546,6 @@ onMounted(async () => {
 .results-note {
   color: #475569;
   font-size: 0.92rem;
-}
-
-.detail-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.detail-item {
-  display: grid;
-  gap: 0.3rem;
-  border-top: 1px solid #eef2f7;
-  padding-top: 0.85rem;
 }
 
 .match-actions {
@@ -605,6 +569,12 @@ onMounted(async () => {
 @media (min-width: 900px) {
   .input-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .action-row {
+    justify-content: stretch;
   }
 }
 </style>

@@ -42,7 +42,7 @@ const clearAndContinue = () => {
 
       <div class="booking-details">
         <p><strong>Service:</strong> {{ draft.serviceName }}</p>
-        <p><strong>Doctor:</strong> {{ draft.doctorName || 'Care team' }}</p>
+        <p><strong>Doctor:</strong> {{ draft.doctorName || '-' }}</p>
         <p><strong>Date:</strong> {{ formattedDate }}</p>
         <p><strong>Time:</strong> {{ draft.time }}</p>
         <p><strong>Status:</strong> {{ draft.status || 'Pending Confirmation' }}</p>

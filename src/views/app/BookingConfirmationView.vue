@@ -106,6 +106,10 @@ const clearAndReturn = () => {
               <strong>{{ draft.serviceCategory }}</strong>
             </article>
             <article class="summary-row">
+              <span>Doctor</span>
+              <strong>{{ draft.doctorName || '-' }}</strong>
+            </article>
+            <article class="summary-row">
               <span>Date</span>
               <strong>{{ formattedDate }}</strong>
             </article>

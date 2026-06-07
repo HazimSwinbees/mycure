@@ -8,6 +8,7 @@ const loadError = ref('')
 const saveError = ref('')
 const saveMessage = ref('')
 const isSaving = ref(false)
+const activeEditor = ref(false)
 
 const form = reactive({
   clinicName: '',
@@ -42,6 +43,22 @@ const applyForm = (value) => {
   form.emergencyNote = value?.emergencyNote || ''
 }
 
+const openEditor = () => {
+  if (!clinic.value) return
+
+  applyForm(clinic.value)
+  saveError.value = ''
+  saveMessage.value = ''
+  activeEditor.value = true
+}
+
+const closeEditor = () => {
+  if (isSaving.value) return
+
+  activeEditor.value = false
+  saveError.value = ''
+}
+
 const loadClinicInfo = async () => {
   isLoading.value = true
   loadError.value = ''
@@ -65,6 +82,7 @@ const saveClinicInfo = async () => {
     clinic.value = await updateClinicInfo({ ...form })
     applyForm(clinic.value)
     saveMessage.value = 'Clinic information saved successfully.'
+    activeEditor.value = false
   } catch (error) {
     saveError.value = error.message || 'Unable to save clinic information.'
   } finally {
@@ -87,10 +105,6 @@ onMounted(loadClinicInfo)
         </p>
       </div>
 
-      <div class="hero-mark">
-        <span>Editable</span>
-        <strong>Live database</strong>
-      </div>
     </section>
 
     <section v-if="isLoading" class="panel state-panel">
@@ -106,11 +120,19 @@ onMounted(loadClinicInfo)
 
     <template v-else>
       <div class="content-grid">
-        <aside class="overview-stack">
-          <section class="panel overview-panel">
-            <div class="overview-card">
-              <p class="section-label">Current overview</p>
-              <h2>{{ clinic?.clinicName }}</h2>
+        <section class="panel overview-panel">
+            <div class="overview-card clinic-card">
+              <div class="overview-head">
+                <div>
+                  <p class="section-label">Current overview</p>
+                  <h2>{{ clinic?.clinicName }}</h2>
+                </div>
+                <div class="overview-actions">
+                  <span class="clinic-chip">Public info</span>
+                  <button class="secondary-action" type="button" @click="openEditor">Edit clinic info</button>
+                </div>
+              </div>
+
               <p class="overview-tagline">{{ clinic?.tagline }}</p>
               <p class="overview-description">{{ clinic?.description }}</p>
             </div>
@@ -121,86 +143,106 @@ onMounted(loadClinicInfo)
                 <strong>{{ item.value }}</strong>
               </article>
             </div>
-          </section>
 
-          <section class="panel note-panel">
-            <p class="section-label">Emergency note</p>
-            <h2>Patient-facing guidance</h2>
-            <p class="muted-copy">{{ clinic?.emergencyNote }}</p>
-          </section>
-        </aside>
+            <div class="address-card">
+              <p class="section-label">Location</p>
+              <strong>{{ clinic?.addressLine1 || 'Address not set' }}</strong>
+              <p>{{ clinic?.addressLine2 || 'City, state, and postcode not set' }}</p>
+            </div>
+        </section>
+      </div>
 
-        <section class="panel form-panel">
-          <div class="panel-head">
+      <div
+        v-if="activeEditor"
+        class="edit-modal-shell"
+        role="dialog"
+        aria-modal="true"
+        @click.self="closeEditor"
+      >
+        <section class="edit-modal">
+          <div class="edit-head">
             <div>
               <p class="section-label">Edit clinic info</p>
               <h2>Update clinic details</h2>
             </div>
+            <button class="modal-close" type="button" aria-label="Close edit form" @click="closeEditor">
+              x
+            </button>
           </div>
 
           <form class="form-grid" @submit.prevent="saveClinicInfo">
-            <label class="field field-wide">
-              <span>Clinic name</span>
-              <input v-model="form.clinicName" type="text" placeholder="Enter clinic name" />
-            </label>
+            <section class="form-section field-wide">
+              <div class="form-section-head">
+                <p class="section-label">Identity</p>
+                <h3>Clinic profile</h3>
+              </div>
 
-            <label class="field field-wide">
-              <span>Tagline</span>
-              <input v-model="form.tagline" type="text" placeholder="Short clinic tagline" />
-            </label>
+              <div class="section-grid">
+                <label class="field field-wide">
+                  <span>Clinic name</span>
+                  <input v-model="form.clinicName" type="text" placeholder="Enter clinic name" />
+                </label>
 
-            <label class="field">
-              <span>Email</span>
-              <input v-model="form.email" type="email" placeholder="Enter clinic email" />
-            </label>
+                <label class="field field-wide">
+                  <span>Tagline</span>
+                  <input v-model="form.tagline" type="text" placeholder="Short clinic tagline" />
+                </label>
 
-            <label class="field">
-              <span>Phone</span>
-              <input v-model="form.phone" type="text" placeholder="Enter clinic phone number" />
-            </label>
+                <label class="field field-wide">
+                  <span>Description</span>
+                  <textarea
+                    v-model="form.description"
+                    rows="5"
+                    placeholder="Describe the clinic and care focus"
+                  />
+                </label>
+              </div>
+            </section>
 
-            <label class="field field-wide">
-              <span>Address line 1</span>
-              <input v-model="form.addressLine1" type="text" placeholder="Street address" />
-            </label>
+            <section class="form-section field-wide">
+              <div class="form-section-head">
+                <p class="section-label">Contact</p>
+                <h3>Public details</h3>
+              </div>
 
-            <label class="field field-wide">
-              <span>Address line 2</span>
-              <input v-model="form.addressLine2" type="text" placeholder="City, state, postcode" />
-            </label>
+              <div class="section-grid">
+                <label class="field">
+                  <span>Email</span>
+                  <input v-model="form.email" type="email" placeholder="Enter clinic email" />
+                </label>
 
-            <label class="field">
-              <span>Operating hours</span>
-              <input v-model="form.operatingHours" type="text" placeholder="Operating schedule" />
-            </label>
+                <label class="field">
+                  <span>Phone</span>
+                  <input v-model="form.phone" type="text" placeholder="Enter clinic phone number" />
+                </label>
 
-            <label class="field">
-              <span>Website</span>
-              <input v-model="form.website" type="text" placeholder="Website URL" />
-            </label>
+                <label class="field field-wide">
+                  <span>Address line 1</span>
+                  <input v-model="form.addressLine1" type="text" placeholder="Street address" />
+                </label>
 
-            <label class="field field-wide">
-              <span>Description</span>
-              <textarea
-                v-model="form.description"
-                rows="5"
-                placeholder="Describe the clinic and care focus"
-              />
-            </label>
+                <label class="field field-wide">
+                  <span>Address line 2</span>
+                  <input v-model="form.addressLine2" type="text" placeholder="City, state, postcode" />
+                </label>
 
-            <label class="field field-wide">
-              <span>Emergency note</span>
-              <textarea
-                v-model="form.emergencyNote"
-                rows="4"
-                placeholder="Add urgent care instructions"
-              />
-            </label>
+                <label class="field">
+                  <span>Operating hours</span>
+                  <input v-model="form.operatingHours" type="text" placeholder="Operating schedule" />
+                </label>
+
+                <label class="field">
+                  <span>Website</span>
+                  <input v-model="form.website" type="text" placeholder="Website URL" />
+                </label>
+              </div>
+            </section>
 
             <p v-if="saveError" class="feedback error-text" role="alert">{{ saveError }}</p>
             <p v-else-if="saveMessage" class="feedback success-text">{{ saveMessage }}</p>
 
             <div class="action-row">
+              <button class="secondary-action" type="button" @click="closeEditor">Cancel</button>
               <button class="primary-action" type="submit" :disabled="isSaving">
                 {{ isSaving ? 'Saving clinic info...' : 'Save clinic info' }}
               </button>
@@ -214,12 +256,12 @@ onMounted(loadClinicInfo)
 
 <style scoped>
 .clinic-page,
-.overview-stack,
-.content-grid,
 .summary-grid,
-.form-grid {
+.form-grid,
+.form-section,
+.section-grid {
   display: grid;
-  gap: 1rem;
+  gap: 1.25rem;
 }
 
 .hero-panel,
@@ -238,8 +280,8 @@ onMounted(loadClinicInfo)
   display: grid;
   gap: 1rem;
   background:
-    radial-gradient(circle at top right, rgba(15, 118, 110, 0.14), transparent 36%),
-    linear-gradient(180deg, #ffffff 0%, #f8fffd 100%);
+    radial-gradient(circle at top right, rgba(74, 86, 201, 0.14), transparent 36%),
+    linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
 }
 
 .hero-copy,
@@ -249,18 +291,27 @@ onMounted(loadClinicInfo)
   gap: 0.45rem;
 }
 
+.content-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.25rem;
+  width: 100%;
+  max-width: none;
+}
+
 .section-label {
-  color: #7a7f87;
+  color: #6f7d90;
   font-size: 0.75rem;
   font-weight: 600;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .hero-copy h1,
 .panel-head h2,
 .overview-card h2,
-.note-panel h2 {
-  color: #111827;
+.form-section-head h3 {
+  color: #14213d;
   font-weight: 700;
 }
 
@@ -273,40 +324,67 @@ onMounted(loadClinicInfo)
 .overview-tagline,
 .overview-description,
 .summary-item span,
-.field span {
-  color: #6b7280;
-}
-
-.hero-mark {
-  display: inline-grid;
-  justify-self: start;
-  gap: 0.15rem;
-  border: 1px solid #c7ece7;
-  border-radius: 16px;
-  background: #f0fdfa;
-  color: #115e59;
-  padding: 0.9rem 1rem;
-}
-
-.hero-mark span {
-  font-size: 0.78rem;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-.hero-mark strong {
-  font-size: 1rem;
+.field span,
+.address-card p {
+  color: #607086;
 }
 
 .overview-panel,
 .form-panel {
   align-content: start;
+  width: 100%;
+}
+
+.clinic-card,
+.form-section,
+.address-card {
+  padding: 1rem;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #f8fbff 0%, #f3f7ff 100%);
+  border: 1px solid #e3ebf5;
+}
+
+.overview-head,
+.form-section-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
 }
 
 .overview-card {
-  padding: 1rem;
-  border-radius: 16px;
-  background: linear-gradient(180deg, #f8fffd 0%, #f3f7ff 100%);
+  padding: 1.2rem 1.2rem 1.25rem;
+}
+
+.overview-tagline {
+  margin-top: 0.35rem;
+}
+
+.overview-description {
+  margin-top: 0.25rem;
+  line-height: 1.7;
+}
+
+.overview-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.clinic-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  border: 1px solid #d7e3fb;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #3157b7;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.3rem 0.75rem;
 }
 
 .overview-tagline {
@@ -320,21 +398,32 @@ onMounted(loadClinicInfo)
 
 .summary-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.2rem 1.2rem;
 }
 
 .summary-item {
   display: grid;
-  gap: 0.28rem;
-  border: 1px solid #eef2f7;
+  gap: 0.35rem;
+  border: 1px solid #e3ebf5;
   border-radius: 14px;
-  background: #ffffff;
-  padding: 1rem;
+  background: linear-gradient(180deg, #ffffff 0%, #fafcff 100%);
+  padding: 1.1rem;
 }
 
 .summary-item strong {
-  color: #111827;
+  color: #14213d;
   font-weight: 600;
   overflow-wrap: anywhere;
+}
+
+.address-card {
+  gap: 0.35rem;
+  margin-top: 0.15rem;
+}
+
+.address-card strong {
+  color: #14213d;
+  font-weight: 600;
 }
 
 .panel-head,
@@ -349,10 +438,18 @@ onMounted(loadClinicInfo)
   margin-top: 0.9rem;
 }
 
+.form-section {
+  gap: 0.9rem;
+}
+
+.form-section-head h3 {
+  font-size: 1.05rem;
+}
+
 .field input,
 .field textarea {
   width: 100%;
-  border: 1px solid #dbe2ea;
+  border: 1px solid #d7e3f2;
   border-radius: 12px;
   background: #ffffff;
   color: #111827;
@@ -367,8 +464,8 @@ onMounted(loadClinicInfo)
 .field input:focus,
 .field textarea:focus {
   outline: none;
-  border-color: #9dd9d0;
-  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+  border-color: #9bb7f1;
+  box-shadow: 0 0 0 3px rgba(49, 87, 183, 0.12);
 }
 
 .field-wide {
@@ -386,7 +483,7 @@ onMounted(loadClinicInfo)
 }
 
 .success-text {
-  color: #0f766e;
+  color: #3157b7;
 }
 
 .primary-action {
@@ -394,13 +491,67 @@ onMounted(loadClinicInfo)
   align-items: center;
   justify-content: center;
   min-height: 42px;
-  border: 1px solid #0f766e;
+  border: 1px solid #3157b7;
   border-radius: 12px;
-  background: #0f766e;
+  background: #3157b7;
   color: #ffffff;
   font-size: 0.92rem;
   font-weight: 600;
   padding: 0.75rem 1rem;
+}
+
+.secondary-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  border: 1px solid #d7e3fb;
+  border-radius: 12px;
+  background: #f5f8ff;
+  color: #3157b7;
+  font-size: 0.92rem;
+  font-weight: 600;
+  padding: 0.75rem 1rem;
+}
+
+.edit-modal-shell {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  background: rgba(15, 23, 42, 0.38);
+  overflow-y: auto;
+}
+
+.edit-modal {
+  width: min(100%, 760px);
+  max-height: calc(100vh - 2.5rem);
+  border: 1px solid #dbe2ea;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 24px 80px rgba(15, 23, 42, 0.16);
+  padding: 1.25rem;
+  overflow-y: auto;
+}
+
+.edit-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.modal-close {
+  width: 2.2rem;
+  height: 2.2rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #6b7280;
+  font-size: 1.2rem;
+  line-height: 1;
 }
 
 .primary-action:disabled {
@@ -409,11 +560,7 @@ onMounted(loadClinicInfo)
 }
 
 @media (min-width: 900px) {
-  .content-grid {
-    grid-template-columns: minmax(320px, 0.85fr) minmax(0, 1.15fr);
-  }
-
-  .form-grid {
+  .section-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -424,8 +571,23 @@ onMounted(loadClinicInfo)
 }
 
 @media (max-width: 640px) {
+  .overview-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .secondary-action {
+    width: 100%;
+  }
+
   .summary-grid {
     grid-template-columns: 1fr;
+  }
+
+  .overview-head,
+  .form-section-head {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .action-row {
@@ -434,6 +596,10 @@ onMounted(loadClinicInfo)
 
   .primary-action {
     width: 100%;
+  }
+
+  .edit-modal {
+    padding: 1rem;
   }
 }
 </style>

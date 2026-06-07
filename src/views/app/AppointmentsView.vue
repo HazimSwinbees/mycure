@@ -3,22 +3,41 @@ import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { getCurrentPatientAppointments } from '../../services/appointmentApi'
 
+const activeStatus = ref('Upcoming')
+const statuses = ['Upcoming', 'All', 'Pending', 'Confirmed', 'Rejected', 'Cancelled', 'Completed']
 const appointments = ref([])
 const isLoading = ref(true)
-const errorMessage = ref('')
-const activeStatus = ref('All')
+const loadError = ref('')
 
-const statusTabs = ['All', 'Pending', 'Confirmed', 'Rejected', 'Cancelled', 'Completed']
+const isUpcomingAppointment = (appointment) => {
+  if (!appointment?.rawDate) return false
+  if (['Cancelled', 'Completed', 'Rejected'].includes(appointment.status)) return false
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  const target = new Date(appointment.rawDate)
+  if (Number.isNaN(target.getTime())) return false
+  target.setHours(0, 0, 0, 0)
+
+  return target.getTime() >= today.getTime()
+}
 
 const filteredAppointments = computed(() => {
-  if (activeStatus.value === 'All') {
-    return appointments.value
+  if (activeStatus.value === 'Upcoming') {
+    return appointments.value.filter(isUpcomingAppointment)
   }
 
-  return appointments.value.filter((item) => item.status === activeStatus.value)
+  return activeStatus.value === 'All'
+    ? appointments.value
+    : appointments.value.filter((item) => item.status === activeStatus.value)
 })
 
 const getStatusCount = (status) => {
+  if (status === 'Upcoming') {
+    return appointments.value.filter(isUpcomingAppointment).length
+  }
+
   if (status === 'All') {
     return appointments.value.length
   }
@@ -26,20 +45,111 @@ const getStatusCount = (status) => {
   return appointments.value.filter((item) => item.status === status).length
 }
 
-const loadAppointments = async () => {
+const usesGroupedLayout = computed(() => ['Upcoming', 'All'].includes(activeStatus.value))
+
+const formatDateLabel = (value) => {
+  if (!value) {
+    return { title: 'Unknown date', subtitle: '' }
+  }
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    return { title: value, subtitle: '' }
+  }
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  const tomorrow = new Date(today)
+  tomorrow.setDate(tomorrow.getDate() + 1)
+
+  const target = new Date(date)
+  target.setHours(0, 0, 0, 0)
+
+  const fullDate = new Intl.DateTimeFormat('en-GB', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(date)
+
+  const shortDate = new Intl.DateTimeFormat('en-GB', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(date)
+
+  if (target.getTime() === today.getTime()) {
+    return { title: 'Today', subtitle: shortDate }
+  }
+
+  if (target.getTime() === tomorrow.getTime()) {
+    return { title: 'Tomorrow', subtitle: shortDate }
+  }
+
+  return { title: fullDate, subtitle: '' }
+}
+
+const groupedAppointments = computed(() => {
+  const groups = new Map()
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  const tomorrow = new Date(today)
+  tomorrow.setDate(tomorrow.getDate() + 1)
+
+  const formatIsoDate = (date) => {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
+
+  groups.set(formatIsoDate(today), [])
+  groups.set(formatIsoDate(tomorrow), [])
+
+  for (const appointment of filteredAppointments.value) {
+    const key = appointment.rawDate || appointment.date || 'unknown'
+
+    if (!groups.has(key)) {
+      groups.set(key, [])
+    }
+
+    groups.get(key).push(appointment)
+  }
+
+  return [...groups.entries()]
+    .map(([dateKey, items]) => ({
+      dateKey,
+      ...formatDateLabel(dateKey),
+      items,
+    }))
+    .sort((a, b) => {
+      if (a.dateKey === 'unknown') return 1
+      if (b.dateKey === 'unknown') return -1
+
+      const first = new Date(a.dateKey)
+      const second = new Date(b.dateKey)
+
+      if (Number.isNaN(first.getTime())) return 1
+      if (Number.isNaN(second.getTime())) return -1
+
+      return first.getTime() - second.getTime()
+    })
+})
+
+onMounted(async () => {
   isLoading.value = true
-  errorMessage.value = ''
+  loadError.value = ''
 
   try {
     appointments.value = await getCurrentPatientAppointments()
   } catch (error) {
-    errorMessage.value = error.message || 'Unable to load appointments right now.'
+    loadError.value = error.message || 'Unable to load appointments.'
   } finally {
     isLoading.value = false
   }
-}
-
-onMounted(loadAppointments)
+})
 </script>
 
 <template>
@@ -49,8 +159,8 @@ onMounted(loadAppointments)
         <p class="section-label">Appointments</p>
         <h1>Manage your visits</h1>
         <p class="muted-copy">
-          Review upcoming bookings, track each appointment status, and open any card for full
-          details.
+          Review pending, confirmed, rejected, completed, and cancelled bookings in one
+          structured view.
         </p>
       </div>
 
@@ -59,86 +169,184 @@ onMounted(loadAppointments)
       </div>
     </section>
 
-    <section class="tabs-panel">
-      <button
-        v-for="status in statusTabs"
-        :key="status"
-        :class="['status-tab', { active: activeStatus === status }]"
-        type="button"
-        @click="activeStatus = status"
-      >
-        <span>{{ status }}</span>
-        <strong>{{ getStatusCount(status) }}</strong>
-      </button>
+    <section class="tabs-panel" aria-label="Appointment status">
+      <div class="tabs-row">
+        <button
+          v-for="status in statuses"
+          :key="status"
+          class="tab-button"
+          :class="{ 'is-active': activeStatus === status }"
+          type="button"
+          @click="activeStatus = status"
+        >
+          <span>{{ status }}</span>
+          <strong>{{ getStatusCount(status) }}</strong>
+        </button>
+      </div>
     </section>
 
-    <section class="cards-section">
-      <div v-if="isLoading" class="state-panel">
-        <p>Loading appointments.</p>
+    <section v-if="isLoading" class="entry-card state-card">
+      <p class="section-label">Appointments</p>
+      <h2>Loading appointments</h2>
+      <p class="muted-copy">Fetching your bookings from Supabase.</p>
+    </section>
+
+    <section v-else-if="loadError" class="entry-card state-card">
+      <p class="section-label">Appointments</p>
+      <h2>Unable to load appointments</h2>
+      <p class="muted-copy">{{ loadError }}</p>
+    </section>
+
+    <section v-else-if="!filteredAppointments.length" class="entry-card state-card">
+      <p class="section-label">Appointments</p>
+      <h2>No appointments found</h2>
+      <p class="muted-copy">
+        {{
+          activeStatus === 'Upcoming'
+            ? 'There is no upcoming appointment.'
+            : 'There is no appointment for the selected status.'
+        }}
+      </p>
+    </section>
+
+    <div v-else-if="usesGroupedLayout" class="grouped-lists">
+      <section v-for="group in groupedAppointments" :key="group.dateKey" class="date-group">
+        <div class="date-head">
+          <div class="date-copy">
+            <h2>{{ group.title }}</h2>
+            <p v-if="group.subtitle" class="muted-copy">{{ group.subtitle }}</p>
+          </div>
+        </div>
+
+        <section class="list-shell">
+          <div class="list-head">
+            <span>Doctor</span>
+            <span>Service</span>
+            <span>Date</span>
+            <span>Time</span>
+            <span>Status</span>
+            <span>Action</span>
+          </div>
+
+          <div v-if="group.items.length" class="list-body">
+            <article v-for="appointment in group.items" :key="appointment.id" class="list-row">
+              <div class="list-cell list-person">
+                <span class="mobile-label">Doctor</span>
+                <strong>{{ appointment.doctor }}</strong>
+                <small>{{ appointment.location }}</small>
+              </div>
+              <div class="list-cell">
+                <span class="mobile-label">Service</span>
+                <strong>{{ appointment.service }}</strong>
+                <small>{{ appointment.notes || '-' }}</small>
+              </div>
+              <div class="list-cell">
+                <span class="mobile-label">Date</span>
+                <strong>{{ appointment.date }}</strong>
+              </div>
+              <div class="list-cell">
+                <span class="mobile-label">Time</span>
+                <strong>{{ appointment.time }}</strong>
+              </div>
+              <div class="list-cell">
+                <span class="mobile-label">Status</span>
+                <span :class="['status-badge', appointment.status.toLowerCase()]">
+                  {{ appointment.status }}
+                </span>
+              </div>
+              <div class="list-cell list-action">
+                <RouterLink
+                  class="details-button"
+                  :to="{ name: 'appointment-details', params: { id: appointment.id } }"
+                >
+                  View details
+                </RouterLink>
+              </div>
+            </article>
+          </div>
+
+          <div v-else class="empty-group">There is no appointment.</div>
+        </section>
+      </section>
+    </div>
+
+    <section v-else class="list-shell">
+      <div class="list-head">
+        <span>Doctor</span>
+        <span>Service</span>
+        <span>Date</span>
+        <span>Time</span>
+        <span>Status</span>
+        <span>Action</span>
       </div>
 
-      <div v-else-if="errorMessage" class="state-panel">
-        <p>{{ errorMessage }}</p>
-      </div>
-
-      <div v-else-if="!filteredAppointments.length" class="state-panel">
-        <p>No appointments found for this status.</p>
-      </div>
-
-      <div v-else class="appointments-grid">
-        <RouterLink
-          v-for="appointment in filteredAppointments"
-          :key="appointment.id"
-          class="appointment-card"
-          :to="{ name: 'appointment-details', params: { id: appointment.id } }"
-        >
-          <div class="card-top">
-            <span :class="['status-chip', appointment.status.toLowerCase()]">
+      <div class="list-body">
+        <article v-for="appointment in filteredAppointments" :key="appointment.id" class="list-row">
+          <div class="list-cell list-person">
+            <span class="mobile-label">Doctor</span>
+            <strong>{{ appointment.doctor }}</strong>
+            <small>{{ appointment.location }}</small>
+          </div>
+          <div class="list-cell">
+            <span class="mobile-label">Service</span>
+            <strong>{{ appointment.service }}</strong>
+            <small>{{ appointment.notes || '-' }}</small>
+          </div>
+          <div class="list-cell">
+            <span class="mobile-label">Date</span>
+            <strong>{{ appointment.date }}</strong>
+          </div>
+          <div class="list-cell">
+            <span class="mobile-label">Time</span>
+            <strong>{{ appointment.time }}</strong>
+          </div>
+          <div class="list-cell">
+            <span class="mobile-label">Status</span>
+            <span :class="['status-badge', appointment.status.toLowerCase()]">
               {{ appointment.status }}
             </span>
-            <small>{{ appointment.date }}</small>
           </div>
-
-          <div class="card-main">
-            <h3>{{ appointment.service }}</h3>
-            <p>{{ appointment.doctor }}</p>
+          <div class="list-cell list-action">
+            <RouterLink
+              class="details-button"
+              :to="{ name: 'appointment-details', params: { id: appointment.id } }"
+            >
+              View details
+            </RouterLink>
           </div>
-
-          <div class="card-meta">
-            <article>
-              <span>Time</span>
-              <strong>{{ appointment.time }}</strong>
-            </article>
-            <article>
-              <span>Location</span>
-              <strong>{{ appointment.location }}</strong>
-            </article>
-          </div>
-
-          <div class="card-footer">
-            <span>Open details</span>
-          </div>
-        </RouterLink>
+        </article>
       </div>
     </section>
   </section>
 </template>
 
 <style scoped>
-.appointments-page {
+.appointments-page,
+.list-shell,
+.grouped-lists,
+.date-group {
   display: grid;
   gap: 1rem;
 }
 
 .hero-panel,
-.tabs-panel {
+.tabs-panel,
+.list-shell {
   border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  border-radius: 14px;
   background: #ffffff;
 }
 
-.hero-panel {
+.hero-panel,
+.tabs-panel,
+.list-shell {
   padding: 1.25rem;
+}
+
+.hero-copy {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
 }
 
 .hero-panel {
@@ -146,9 +354,10 @@ onMounted(loadAppointments)
   gap: 1rem;
 }
 
-.hero-copy {
-  display: grid;
-  gap: 0.35rem;
+.hero-actions {
+  display: flex;
+  align-items: end;
+  justify-content: flex-end;
 }
 
 .section-label {
@@ -159,8 +368,7 @@ onMounted(loadAppointments)
 }
 
 .hero-copy h1,
-.panel-head h2,
-.appointment-card h3 {
+.date-copy h2 {
   color: #111827;
   font-weight: 700;
 }
@@ -171,194 +379,200 @@ onMounted(loadAppointments)
 }
 
 .muted-copy,
-.appointment-card p,
-.appointment-card small,
-.card-meta span,
-.state-panel p,
-.card-footer span {
+.list-cell small,
+.list-head {
   color: #6b7280;
-}
-
-.hero-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
 }
 
 .primary-link {
   display: inline-flex;
-  min-height: 42px;
   align-items: center;
   justify-content: center;
+  min-height: 40px;
+  border: 1px solid #3157b7;
   border-radius: 10px;
-  background: #111827;
+  background: #3157b7;
   color: #ffffff;
-  font-size: 0.92rem;
+  font-size: 0.9rem;
   font-weight: 600;
-  padding: 0.75rem 1rem;
+  padding: 0.65rem 1rem;
 }
 
-.tabs-panel {
+.tabs-row {
   display: flex;
-  align-items: center;
-  justify-content: space-around;
-  gap: 0.5rem;
+  width: max-content;
+  gap: 1.25rem;
   overflow-x: auto;
-  border-bottom: 1px solid #e5e7eb;
-  padding: 0 0.25rem;
+  padding-bottom: 0.2rem;
+  scrollbar-width: thin;
+  flex-wrap: nowrap;
+  min-width: 100%;
 }
 
-.status-tab {
+.tab-button {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  flex: 1 0 auto;
   gap: 0.45rem;
+  position: relative;
   border: 0;
-  border-bottom: 3px solid transparent;
   background: transparent;
-  color: #97a3b6;
-  font-size: 0.92rem;
+  color: #8a8f98;
+  font-size: 0.95rem;
   font-weight: 600;
-  padding: 0.95rem 1rem 0.8rem;
-  text-align: center;
+  padding: 0 0 0.85rem;
   white-space: nowrap;
-  transition:
-    border-color 180ms ease,
-    color 180ms ease;
 }
 
-.status-tab strong {
+.mobile-label {
+  display: none;
+  color: #7a7f87;
+  font-size: 0.74rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.tab-button strong {
   color: inherit;
   font-size: 0.82rem;
   font-weight: 700;
 }
 
-.status-tab:hover {
-  color: #6f7ea4;
+.tab-button::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  border-radius: 999px;
+  background: transparent;
 }
 
-.status-tab.active {
-  border-color: #5b61ff;
-  color: #5b61ff;
+.tab-button.is-active {
+  color: #4a56c9;
 }
 
-.status-tab.active strong {
-  color: #5b61ff;
+.tab-button.is-active::after {
+  background: #5b61ff;
 }
 
-.state-panel {
-  padding-top: 0.25rem;
-}
-
-.appointments-grid {
-  display: grid;
-  gap: 1rem;
-  margin-top: 1rem;
-}
-
-.cards-section {
-  display: grid;
-  gap: 0.5rem;
-}
-
-.appointment-card {
-  display: grid;
-  gap: 1rem;
+.state-card {
   border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  border-radius: 14px;
   background: #ffffff;
-  padding: 1rem;
-  transition:
-    border-color 180ms ease,
-    box-shadow 180ms ease,
-    transform 180ms ease;
+  padding: 1.25rem;
 }
 
-.appointment-card:hover {
-  border-color: #d6def5;
-  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.07);
-  transform: translateY(-2px);
-}
-
-.card-top,
-.card-footer {
+.date-head {
   display: flex;
-  align-items: center;
+  align-items: end;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: 1rem;
 }
 
-.card-main {
+.date-copy {
   display: grid;
-  gap: 0.25rem;
+  gap: 0.2rem;
 }
 
-.card-main h3 {
-  font-size: 1.05rem;
-  line-height: 1.2;
+.date-copy h2 {
+  font-size: 1.2rem;
 }
 
-.card-meta {
-  display: grid;
-  gap: 0.75rem;
-  grid-template-columns: repeat(1, minmax(0, 1fr));
-}
-
-.card-meta article {
-  display: grid;
-  gap: 0.18rem;
-  border: 1px solid #f1f5f9;
-  border-radius: 10px;
-  background: #fafbff;
-  padding: 0.8rem;
-}
-
-.card-meta strong {
-  color: #111827;
-  font-size: 0.94rem;
-  font-weight: 600;
-}
-
-.card-footer {
-  border-top: 1px solid #f1f5f9;
-  padding-top: 0.9rem;
-}
-
-.status-chip {
+.status-badge {
   display: inline-flex;
-  min-height: 30px;
   align-items: center;
   justify-content: center;
+  min-height: 28px;
   border-radius: 999px;
+  background: #eef2ff;
+  color: #4a56c9;
   font-size: 0.78rem;
-  font-weight: 700;
-  padding: 0.38rem 0.72rem;
+  font-weight: 600;
+  padding: 0.2rem 0.65rem;
 }
 
-.status-chip.pending {
+.status-badge.completed {
+  background: #ecfdf3;
+  color: #15803d;
+}
+
+.status-badge.cancelled,
+.status-badge.rejected {
+  background: #fff1f2;
+  color: #be123c;
+}
+
+.status-badge.pending {
   background: #fff7ed;
   color: #c2410c;
 }
 
-.status-chip.confirmed {
-  background: #eef2ff;
-  color: #3f4fb3;
+.details-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  border: 1px solid #d7e3fb;
+  border-radius: 10px;
+  background: #f5f8ff;
+  color: #3157b7;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0.65rem 1rem;
 }
 
-.status-chip.cancelled {
-  background: #fff1f2;
-  color: #be123c;
+.list-shell {
+  padding-top: 0.95rem;
 }
 
-.status-chip.rejected {
-  background: #fff1f2;
-  color: #be123c;
+.list-head,
+.list-row {
+  display: grid;
+  grid-template-columns: 1.2fr 1.3fr 0.9fr 0.7fr 0.8fr 0.9fr;
+  gap: 1rem;
+  align-items: center;
 }
 
-.status-chip.completed {
-  background: #ecfdf3;
-  color: #067647;
+.list-head {
+  padding: 0 0.15rem 0.6rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.list-body {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.empty-group {
+  color: #6b7280;
+  font-size: 0.95rem;
+  padding: 0.5rem 0.15rem 0;
+}
+
+.list-row {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 0.95rem 1rem;
+}
+
+.list-cell {
+  display: grid;
+  gap: 0.18rem;
+  min-width: 0;
+}
+
+.list-cell strong {
+  color: #111827;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.list-action {
+  justify-items: end;
 }
 
 @media (min-width: 760px) {
@@ -366,19 +580,66 @@ onMounted(loadAppointments)
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: end;
   }
+}
 
-  .appointments-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+@media (max-width: 980px) {
+  .list-head {
+    display: none;
   }
 
-  .card-meta {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .list-row {
+    grid-template-columns: 1fr;
+    gap: 0.9rem;
+    padding: 1rem;
+  }
+
+  .mobile-label {
+    display: inline-flex;
+  }
+
+  .list-cell {
+    gap: 0.28rem;
+  }
+
+  .list-person,
+  .list-action {
+    padding-top: 0;
+  }
+
+  .list-cell:not(:first-child) {
+    border-top: 1px solid #eef2f7;
+    padding-top: 0.85rem;
+  }
+
+  .list-action {
+    justify-items: start;
   }
 }
 
-@media (min-width: 1120px) {
-  .appointments-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+@media (max-width: 640px) {
+  .hero-actions {
+    justify-content: stretch;
+  }
+
+  .hero-actions > * {
+    width: 100%;
+  }
+
+  .tabs-panel,
+  .hero-panel,
+  .list-shell,
+  .state-card {
+    padding: 1rem;
+  }
+
+  .tabs-panel {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tabs-row {
+    min-width: max-content;
+    padding-right: 0.35rem;
   }
 }
 </style>
