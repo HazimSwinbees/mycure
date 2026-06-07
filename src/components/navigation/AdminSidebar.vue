@@ -188,11 +188,13 @@ onMounted(async () => {
   inset: 0 auto 0 0;
   z-index: 50;
   width: min(86vw, 286px);
-  border-right: 1px solid #e5e7eb;
-  background: #ffffff;
+  border-right: 1px solid rgba(140, 179, 176, 0.28);
+  background:
+    radial-gradient(circle at top left, rgba(93, 179, 171, 0.14), transparent 18rem),
+    linear-gradient(180deg, #0d3734 0%, #123f3b 52%, #174945 100%);
   transform: translateX(-100%);
   transition: transform 180ms ease;
-  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.12);
+  box-shadow: 0 24px 60px rgba(11, 31, 38, 0.24);
 }
 
 .sidebar.is-open {
@@ -240,13 +242,13 @@ onMounted(async () => {
 }
 
 .brand-copy strong {
-  color: #111827;
+  color: #ffffff;
   font-size: 1.08rem;
   font-weight: 700;
 }
 
 .brand-copy small {
-  color: #8a8f98;
+  color: rgba(223, 242, 240, 0.72);
   font-size: 0.86rem;
   font-weight: 500;
 }
@@ -263,7 +265,7 @@ onMounted(async () => {
   min-height: 2.75rem;
   border-radius: 10px;
   border: 1px solid transparent;
-  color: #6b7280;
+  color: rgba(230, 245, 244, 0.76);
   padding: 0.5rem 0.25rem;
   transition:
     background 160ms ease,
@@ -274,20 +276,20 @@ onMounted(async () => {
 }
 
 .nav-link:hover {
-  background: #f9fafb;
-  color: #111827;
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
   transform: translateX(2px);
 }
 
 .nav-link.router-link-active {
-  border-color: #dbe7fb;
-  background: linear-gradient(180deg, #f7faff 0%, #eef4ff 100%);
-  box-shadow: 0 10px 24px rgba(49, 87, 183, 0.08);
-  color: #3157b7;
+  border-color: rgba(171, 224, 220, 0.22);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(183, 244, 238, 0.12) 100%);
+  box-shadow: 0 12px 28px rgba(8, 27, 35, 0.18);
+  color: #ffffff;
 }
 
 .nav-link.router-link-active .nav-label {
-  color: #163c8c;
+  color: #ffffff;
   font-weight: 600;
 }
 
@@ -305,7 +307,7 @@ onMounted(async () => {
 }
 
 .nav-label {
-  color: #111827;
+  color: inherit;
   font-size: 0.98rem;
   font-weight: 500;
 }
@@ -315,7 +317,7 @@ onMounted(async () => {
   gap: 1rem;
   margin-top: auto;
   padding-top: 1.5rem;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid rgba(171, 224, 220, 0.16);
 }
 
 .profile-card {
@@ -334,7 +336,7 @@ onMounted(async () => {
 }
 
 .profile-link:hover {
-  background: #f9fafb;
+  background: rgba(255, 255, 255, 0.06);
   transform: translateY(-1px);
 }
 
@@ -344,10 +346,10 @@ onMounted(async () => {
   height: 2.4rem;
   place-items: center;
   overflow: hidden;
-  border: 1px solid #e5e7eb;
+  border: 1px solid rgba(171, 224, 220, 0.22);
   border-radius: 50%;
-  background: #f3f4f6;
-  color: #374151;
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
   font-size: 0.9rem;
   font-weight: 600;
 }
@@ -364,7 +366,7 @@ onMounted(async () => {
 }
 
 .profile-copy strong {
-  color: #111827;
+  color: #ffffff;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -373,7 +375,7 @@ onMounted(async () => {
 }
 
 .profile-copy span {
-  color: #6b7280;
+  color: rgba(223, 242, 240, 0.72);
   font-size: 0.82rem;
   font-weight: 500;
   margin-top: 0.1rem;

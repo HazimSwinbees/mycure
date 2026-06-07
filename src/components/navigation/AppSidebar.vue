@@ -165,8 +165,9 @@ onMounted(async () => {
   inset: 0 auto 0 0;
   z-index: 50;
   width: min(86vw, 286px);
-  border-right: 1px solid #e5e7eb;
-  background: #ffffff;
+  border-right: 1px solid var(--cure-line);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(246, 249, 255, 0.98));
   transform: translateX(-100%);
   transition: transform 180ms ease;
   box-shadow: 0 20px 60px rgba(15, 23, 42, 0.12);
@@ -317,14 +318,14 @@ onMounted(async () => {
 }
 
 .nav-link:hover {
-  background: #f9fafb;
+  background: rgba(220, 236, 255, 0.7);
   color: #111827;
   transform: translateX(2px);
 }
 
 .nav-link.router-link-active {
-  border-color: #dbe7fb;
-  background: linear-gradient(180deg, #f7faff 0%, #eef4ff 100%);
+  border-color: var(--cure-line);
+  background: linear-gradient(180deg, var(--cure-surface), var(--cure-primary-soft));
   box-shadow: 0 10px 24px rgba(49, 87, 183, 0.08);
   color: #3157b7;
 }
@@ -357,7 +358,7 @@ onMounted(async () => {
   gap: 1rem;
   margin-top: auto;
   padding-top: 1.5rem;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid var(--cure-line);
 }
 
 .logout-link {

@@ -68,7 +68,9 @@ onMounted(async () => {
 <style scoped>
 .app-layout {
   min-height: 100vh;
-  background: linear-gradient(180deg, #f6f9fd, var(--cure-bg) 28rem);
+  background:
+    radial-gradient(circle at top left, rgba(42, 123, 240, 0.12), transparent 28rem),
+    linear-gradient(180deg, var(--cure-bg-strong), var(--cure-bg) 36rem);
   overflow-x: hidden;
 }
 
@@ -77,6 +79,7 @@ onMounted(async () => {
   gap: 1rem;
   min-width: 0;
   padding: 0.75rem;
+  background: transparent;
 }
 
 .mobile-topbar {

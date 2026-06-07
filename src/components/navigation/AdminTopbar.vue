@@ -85,11 +85,11 @@ const initials = computed(() =>
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  border: 1px solid rgba(215, 227, 245, 0.85);
+  border: 1px solid rgba(140, 179, 176, 0.28);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.9);
+  background: linear-gradient(180deg, rgba(16, 58, 55, 0.96), rgba(22, 73, 69, 0.96));
   padding: 0.9rem 1rem;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 18px 36px rgba(11, 31, 38, 0.16);
   backdrop-filter: blur(12px);
 }
 
@@ -111,9 +111,9 @@ const initials = computed(() =>
   height: 2.5rem;
   place-items: center;
   gap: 0.22rem;
-  border: 1px solid rgba(215, 227, 245, 0.9);
+  border: 1px solid rgba(171, 224, 220, 0.2);
   border-radius: 8px;
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
   padding: 0;
 }
 
@@ -121,8 +121,8 @@ const initials = computed(() =>
   display: block;
   width: 0.9rem;
   height: 1px;
-  color: var(--cure-text);
-  background: var(--cure-text);
+  color: #ffffff;
+  background: #ffffff;
 }
 
 .title-block {
@@ -130,7 +130,7 @@ const initials = computed(() =>
 }
 
 .topbar p {
-  color: #4f6b6b;
+  color: rgba(223, 242, 240, 0.76);
   font-size: 0.78rem;
   font-weight: 800;
   line-height: 1.1;
@@ -139,7 +139,7 @@ const initials = computed(() =>
 
 .topbar h1 {
   overflow: hidden;
-  color: var(--cure-text);
+  color: #ffffff;
   font-size: clamp(1.05rem, 3vw, 1.35rem);
   font-weight: 850;
   letter-spacing: 0;
@@ -151,10 +151,10 @@ const initials = computed(() =>
 .icon-link,
 .profile-link {
   min-height: 40px;
-  border: 1px solid rgba(215, 227, 245, 0.85);
+  border: 1px solid rgba(171, 224, 220, 0.2);
   border-radius: 8px;
-  background: #ffffff;
-  color: var(--cure-text);
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
 }
 
 .icon-link,
@@ -179,7 +179,7 @@ const initials = computed(() =>
   place-items: center;
   overflow: hidden;
   border-radius: 50%;
-  background: var(--cure-text);
+  background: rgba(255, 255, 255, 0.14);
   color: #ffffff;
   font-size: 0.7rem;
   font-weight: 800;

@@ -71,7 +71,9 @@ onMounted(async () => {
 <style scoped>
 .admin-layout {
   min-height: 100vh;
-  background: #f8fbff;
+  background:
+    radial-gradient(circle at top right, rgba(17, 92, 88, 0.14), transparent 26rem),
+    linear-gradient(180deg, #edf7f6 0%, #f7fbfb 28rem);
 }
 
 .admin-workspace {
@@ -97,6 +99,7 @@ onMounted(async () => {
 
   .admin-workspace {
     min-height: 100vh;
+    border-left: 1px solid rgba(155, 190, 187, 0.5);
     padding: 1.25rem;
   }
 

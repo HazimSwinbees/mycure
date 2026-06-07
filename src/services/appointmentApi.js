@@ -14,6 +14,81 @@ const notifySafely = async (callback) => {
   }
 }
 
+const parseDurationMinutes = (value) => {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value
+  }
+
+  if (typeof value === 'string' && value.trim()) {
+    const match = value.match(/(\d+(?:\.\d+)?)/)
+    if (match) {
+      const parsed = Number(match[1])
+      if (Number.isFinite(parsed)) {
+        return parsed
+      }
+    }
+  }
+
+  return 0
+}
+
+const toMinutes = (timeString) => {
+  if (!timeString || !timeString.includes(':')) {
+    return null
+  }
+
+  const [hours, minutes] = timeString.split(':').map(Number)
+  if (!Number.isFinite(hours) || !Number.isFinite(minutes)) {
+    return null
+  }
+
+  return hours * 60 + minutes
+}
+
+const hasTimeOverlap = (requestedTime, requestedDuration, existingTime, existingDuration) => {
+  const requestedStart = toMinutes(requestedTime)
+  const existingStart = toMinutes(existingTime)
+
+  if (requestedStart === null || existingStart === null) {
+    return false
+  }
+
+  const normalizedRequestedDuration = requestedDuration > 0 ? requestedDuration : 30
+  const normalizedExistingDuration = existingDuration > 0 ? existingDuration : 30
+  const requestedEnd = requestedStart + normalizedRequestedDuration
+  const existingEnd = existingStart + normalizedExistingDuration
+
+  return requestedStart < existingEnd && existingStart < requestedEnd
+}
+
+const ensureAppointmentSlotAvailable = async ({ date, time, duration, excludeAppointmentId = null }) => {
+  const { data, error } = await supabase.rpc('get_booked_appointments_for_date', {
+    target_date: date,
+  })
+
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  const requestedDuration = parseDurationMinutes(duration)
+  const hasConflict = (data || []).some((appointment) => {
+    if (excludeAppointmentId && appointment.id === excludeAppointmentId) {
+      return false
+    }
+
+    return hasTimeOverlap(
+      time,
+      requestedDuration,
+      appointment.appointment_time,
+      parseDurationMinutes(appointment.duration),
+    )
+  })
+
+  if (hasConflict) {
+    throw new Error('This appointment slot is no longer available. Please choose another time.')
+  }
+}
+
 const formatDisplayDate = (dateString) => {
   if (!dateString) {
     return 'Not scheduled'
@@ -130,6 +205,12 @@ const autoCancelPastPendingAppointmentsForPatient = async (patientId) => {
 
 export const createAppointment = async (draft) => {
   const patientId = await getCurrentUserId()
+
+  await ensureAppointmentSlotAvailable({
+    date: draft.date,
+    time: draft.time,
+    duration: draft.serviceDuration,
+  })
 
   const payload = {
     patient_id: patientId,
@@ -302,11 +383,9 @@ export const getBookedAppointmentTimesForDate = async (dateString) => {
     return []
   }
 
-  const { data, error } = await supabase
-    .from(appointmentsTable)
-    .select('appointment_time, status')
-    .eq('appointment_date', dateString)
-    .not('status', 'in', '("Cancelled","Rejected")')
+  const { data, error } = await supabase.rpc('get_booked_appointments_for_date', {
+    target_date: dateString,
+  })
 
   if (error) {
     throw new Error(error.message)
@@ -320,11 +399,9 @@ export const getBookedAppointmentsForDate = async (dateString) => {
     return []
   }
 
-  const { data, error } = await supabase
-    .from(appointmentsTable)
-    .select('appointment_time, duration, status')
-    .eq('appointment_date', dateString)
-    .not('status', 'in', '("Cancelled","Rejected")')
+  const { data, error } = await supabase.rpc('get_booked_appointments_for_date', {
+    target_date: dateString,
+  })
 
   if (error) {
     throw new Error(error.message)

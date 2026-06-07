@@ -120,6 +120,20 @@ const handleLogin = async () => {
         </button>
       </form>
 
+      <section class="demo-panel" aria-label="Demo account credentials">
+        <p class="demo-title">Demo accounts</p>
+        <article class="demo-account">
+          <strong>Doctor</strong>
+          <span>Email: johnny.smith@mycure.com</span>
+          <span>Password: doctor123</span>
+        </article>
+        <article class="demo-account">
+          <strong>Patient</strong>
+          <span>Email: patient1@mycure.com</span>
+          <span>Password: patient123</span>
+        </article>
+      </section>
+
       <div class="panel-footer">
         <p>
           Don't have an account?
@@ -291,6 +305,47 @@ const handleLogin = async () => {
 
 .primary-action:disabled {
   opacity: 0.7;
+}
+
+.demo-panel {
+  display: grid;
+  gap: 0.75rem;
+  border: 1px solid #dbe7fb;
+  border-radius: 12px;
+  background: #f7faff;
+  padding: 0.95rem;
+}
+
+.demo-title {
+  margin: 0;
+  color: #3157b7;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.demo-account {
+  display: grid;
+  gap: 0.18rem;
+  border-top: 1px solid #e3ecfb;
+  padding-top: 0.75rem;
+}
+
+.demo-account:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.demo-account strong {
+  color: #1f2937;
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+.demo-account span {
+  color: #5f6f86;
+  font-size: 0.82rem;
+  font-weight: 600;
 }
 
 .panel-footer {

@@ -80,9 +80,9 @@ const initials = computed(() =>
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  border: 1px solid rgba(215, 227, 245, 0.85);
+  border: 1px solid var(--cure-line);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.94);
   padding: 0.9rem 1rem;
   box-shadow: var(--shadow-sm);
   backdrop-filter: blur(12px);
@@ -107,7 +107,7 @@ const initials = computed(() =>
   height: 2.5rem;
   place-items: center;
   gap: 0.22rem;
-  border: 1px solid rgba(215, 227, 245, 0.9);
+  border: 1px solid var(--cure-line);
   border-radius: 8px;
   background: #ffffff;
   padding: 0;
@@ -134,7 +134,7 @@ const initials = computed(() =>
 .icon-link,
 .profile-link {
   min-height: 40px;
-  border: 1px solid rgba(215, 227, 245, 0.85);
+  border: 1px solid var(--cure-line);
   border-radius: 8px;
   background: #ffffff;
   color: var(--cure-text);
